@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    /* === LANGUAGE OPTIONS === */
+    "target": "ESNext",                          // Dernières fonctionnalités JS
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],   // Bibliothèques disponibles (navigateur + ESNext)
+    "jsx": "react-jsx",                          // JSX natif avec React 17+
+    "module": "ESNext",                          // Utilisé par Vite (ES Modules)
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,                   // Pour importer des fichiers .json
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,                     // Obligatoire avec Vite + React
+    "types": ["vite/client"],                    // ⬅️ Pour que `import.meta.glob` fonctionne
+
+    /* === STRICT MODE === */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "alwaysStrict": true,
+
+    /* === FILE HANDLING === */
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    /* === PATHS (facultatif, mais utile si tu fais du aliasing dans Vite) */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["resources/js/*"]
+    }
+  },
+  "include": ["resources/js/**/*.ts", "resources/js/**/*.tsx"],
+  "exclude": ["node_modules", "vendor"]
+}
