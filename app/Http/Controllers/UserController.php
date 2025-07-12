@@ -77,8 +77,7 @@ class UserController extends Controller
                     'login' => $currentAsso['login'],
                 ]);
             }
-            // Create row in pivot table asso_member with role_id, user_id and asso_id
-            // Check if the user is already a member of the association
+            // Check if the user is already a member of the association - should never happen since we delete all user memberships to associations
             if(AssoMember::where('user_id', $user->id)
                 ->where('asso_id', $asso->id)
                 ->where('role_id', $currentAsso['user_role']['id'])
@@ -86,7 +85,7 @@ class UserController extends Controller
                 info("User is already a member of the association: ".$asso->shortname);
             }
             else {
-                info("User is not a member of the association: ".$asso->shortname);
+                info("Adding user ".$user->id." to the association: ".$asso->shortname." with role: ".$currentAsso['user_role']['id']);
                 AssoMember::create(
                     [
                         'user_id' => $user->id,

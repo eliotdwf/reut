@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Permission;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
@@ -60,7 +62,7 @@ class AuthController extends Controller
         $authorizationUrl = $this->provider->getAuthorizationUrl([
             'state' => $state
         ]);
-        info("Redirecting to authorization URL: $authorizationUrl");
+        Log::debug("Redirecting to authorization URL: $authorizationUrl");
 
         return redirect($authorizationUrl);
     }
@@ -74,7 +76,7 @@ class AuthController extends Controller
      */
     public function callback(Request $request, UserController $userController)
     {
-        info("Callback received with request: " . $request->fullUrl());
+        Log::debug("Callback received with request: " . $request->fullUrl());
         // Retrieve the state parameter from the session
         $storedState = $request->session()->pull('oauth2state');
 
@@ -119,12 +121,19 @@ class AuthController extends Controller
             // Store the user in the session
             Auth::login($user);
 
-            info("User logged in: " . auth()->user()->id);
+            Log::debug("User logged in: " . auth()->user()->id);
+
+            // Update the user's permissions stored in the session
+            $request->session()->put('user_permissions', $user->getPermissions());
+
+            /*info("Has CRUD Room permission ? (expect false) " . ($user->hasPermission(Permission::CRUD_ROOMS->value) ? 'Yes' : 'No'));
+            info("Has Create booking over 2 weeks before ? (expect true) " . ($user->hasPermission(Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value) ? 'Yes' : 'No'));
+            info("Has any of Create booking over 2 weeks before and CRUD rooms ? (expect true) " . ($user->hasPermissions([Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value, Permission::CRUD_ROOMS->value], false) ? 'Yes' : 'No'));
+            info("Has both of Create booking over 2 weeks before and create booking music room ? (expect true) " . ($user->hasPermissions([Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value, Permission::CREATE_BOOKINGS_MUSIC_DANCE_ROOMS_ASSO->value]) ? 'Yes' : 'No'));
+            info("Has both of Create booking over 2 weeks before and CRUD rooms ? (expect false) " . ($user->hasPermissions([Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value, Permission::CRUD_ROOMS->value]) ? 'Yes' : 'No'));*/
 
             // Redirect to the intended url or home if not set
-            info("Redirecting to intended URL: " . $request->session()->get('url.intended'));
-            // Store the user in the session
-
+            Log::debug("Redirecting to intended URL: " . $request->session()->get('url.intended'));
             return redirect()->intended(RouteServiceProvider::HOME)->with('theme-dark', $user->dark_theme);
 
         } catch (IdentityProviderException $e) {

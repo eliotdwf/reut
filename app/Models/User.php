@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\Permission;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Log;
 
 
 class User extends Authenticatable
@@ -24,9 +26,79 @@ class User extends Authenticatable
         'language',
     ];
 
-    public function assos(): HasMany
+    public function assosMemberships(): HasMany
     {
         return $this->hasMany(AssoMember::class);
+    }
+
+    /**
+     * Checks if the user has a specific permission.
+     * @param string $permission the permission to check
+     * @return bool true if the user has the permission, false otherwise
+     */
+    public function hasPermission(string $permission): bool
+    {
+        return $this->hasPermissions([$permission]);
+    }
+
+    /**
+     * Checks if the user has a list of permissions.
+     * @param array $requiredPermissions an array of permissions to check against the user's permissions
+     * @param bool $requireAll indicates if all permissions are required (true) or if any permission is sufficient (false)
+     * @return bool true if the user has the permission, false otherwise
+     */
+    public function hasPermissions(array $requiredPermissions, bool $requireAll = true): bool
+    {
+        if (empty($requiredPermissions)) {
+            return true; // If no permissions are required, return true
+        }
+
+        // retrieve the user permissions from the session
+        $userPermissions = session("user_permissions", $this->getPermissions());
+
+        // If the user has the ALL permission, no need to check specific permissions
+        if (in_array(Permission::ALL->value, $userPermissions)) {
+            return true;
+        }
+
+        if ($requireAll) {
+            // Check if all required permissions are present
+            if (empty(array_diff($requiredPermissions, $userPermissions))) {
+                return true;
+            }
+        } else {
+            // If any of the specified permissions are present, return true
+            if (!empty(array_intersect($requiredPermissions, $userPermissions))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
+    public function getPermissions(): array
+    {
+        Log::debug("Collecting permissions for user ID: " . $this->id);
+        $userPermissions = [];
+        // retrieve the user associations and roles
+        foreach ($this->assosMemberships()->get() as $assoMember) {
+            $assoId = $assoMember->asso->id;
+            $roleId = $assoMember->role_id;
+
+            // Retrieve the permissions for the association and role from the configuration
+            $configPermissions = config("access.allowed.$assoId.$roleId", []);
+            // Retrieve the default permissions for the association
+            $defaultAssociationPermissions = config("access.allowed.$assoId.*", []);
+            // Retrieve the default permissions for the role
+            $defaultRolePermissions = config("access.allowed.*.$roleId", []);
+            // Retrieve the global default permissions
+            $globalDefaultPermissions = config("access.allowed.*.*", []);
+
+            // merge all the user permissions
+            $userPermissions = (array)array_merge($userPermissions, $configPermissions, $defaultRolePermissions,$defaultAssociationPermissions ,$globalDefaultPermissions);
+        }
+        return array_unique($userPermissions);
     }
 
 }
