@@ -126,12 +126,6 @@ class AuthController extends Controller
             // Update the user's permissions stored in the session
             $request->session()->put('user_permissions', $user->getPermissions());
 
-            /*info("Has CRUD Room permission ? (expect false) " . ($user->hasPermission(Permission::CRUD_ROOMS->value) ? 'Yes' : 'No'));
-            info("Has Create booking over 2 weeks before ? (expect true) " . ($user->hasPermission(Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value) ? 'Yes' : 'No'));
-            info("Has any of Create booking over 2 weeks before and CRUD rooms ? (expect true) " . ($user->hasPermissions([Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value, Permission::CRUD_ROOMS->value], false) ? 'Yes' : 'No'));
-            info("Has both of Create booking over 2 weeks before and create booking music room ? (expect true) " . ($user->hasPermissions([Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value, Permission::CREATE_BOOKINGS_MUSIC_DANCE_ROOMS_ASSO->value]) ? 'Yes' : 'No'));
-            info("Has both of Create booking over 2 weeks before and CRUD rooms ? (expect false) " . ($user->hasPermissions([Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value, Permission::CRUD_ROOMS->value]) ? 'Yes' : 'No'));*/
-
             // Redirect to the intended url or home if not set
             Log::debug("Redirecting to intended URL: " . $request->session()->get('url.intended'));
             return redirect()->intended(RouteServiceProvider::HOME)->with('theme-dark', $user->dark_theme);
