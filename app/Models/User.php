@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\Permission;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Log;
 
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasName
 {
     /*
      * The attributes that are mass assignable.
@@ -19,8 +22,8 @@ class User extends Authenticatable
     protected $keyType = 'string'; // Use string for UUID
     protected $fillable = [
         'id',
-        'firstname',
-        'lastname',
+        'first_name',
+        'last_name',
         'email',
         'dark_theme',
         'language',
@@ -101,4 +104,13 @@ class User extends Authenticatable
         return array_unique($userPermissions);
     }
 
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->hasPermission(Permission::MANAGE_ROOMS->value);
+    }
+
+    public function getFilamentName(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
 }

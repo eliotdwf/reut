@@ -16,7 +16,7 @@ enum Permission: string
 
     case UPDATE_DELETE_BOOKINGS_MDE_ROOMS = "update-delete.bookings.mde.rooms"; // allow updating and deleting bookings for MDE rooms
 
-    case CRUD_ROOMS = "crud.rooms"; // allow creating, reading, updating and deleting rooms
+    case MANAGE_ROOMS = "manage.rooms"; // allow creating, reading, updating and deleting rooms
 
     public static function fromStrings(array $perms): array
     {

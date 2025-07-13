@@ -125,6 +125,7 @@ class AuthController extends Controller
 
             // Update the user's permissions stored in the session
             $request->session()->put('user_permissions', $user->getPermissions());
+            info("User permissions stored in session: ", $request->session()->get('user_permissions'));
 
             // Redirect to the intended url or home if not set
             Log::debug("Redirecting to intended URL: " . $request->session()->get('url.intended'));

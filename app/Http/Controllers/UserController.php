@@ -55,8 +55,8 @@ class UserController extends Controller
         $user = User::updateOrCreate(
             ['id' => $userDetails['uuid']],
             [
-                'firstname' => $userDetails['firstName'],
-                'lastname' => $userDetails['lastName'],
+                'first_name' => $userDetails['firstName'],
+                'last_name' => $userDetails['lastName'],
                 'email' => $userDetails['email'],
             ]
         );
