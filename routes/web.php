@@ -30,6 +30,10 @@ Route::prefix('/auth')->name('auth.')->group(function () {
 });
 
 // Add a fallback route for login if needed
-Route::get('/login', function () {
-    return redirect('/auth/login');
+Route::get('/login', function (Request $request) {
+    // chek if url intended is set in the session
+    if (!$request->session()->has('url.intended')) {
+        $request->session()->put('url.intended', url()->previous());
+    }
+    return redirect(route('auth.login'));
 })->name('login');

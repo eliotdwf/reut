@@ -5,6 +5,13 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\RoomResource\Pages;
 use App\Filament\Resources\RoomResource\RelationManagers;
 use App\Models\Room;
+use App\Models\RoomType;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -20,7 +27,89 @@ class RoomResource extends Resource
     {
         return $form
             ->schema([
-                //
+                TextInput::make('name')
+                    ->label('Nom de la salle')
+                    ->required()
+                    ->unique()
+                    ->maxLength(255),
+                TextInput::make('capacity')
+                    ->label('Capacité')
+                    ->numeric()
+                    ->nullable()
+                    ->minValue(1)
+                    ->maxValue(100),
+                Select::make('room_type_id')
+                    ->label('Type de salle')
+                    ->relationship('roomType', 'label')
+                    ->required()
+                    ->searchable()
+                    ->preload()
+                    ->options(RoomType::query()->get()->pluck('label', 'id'))
+                    ->placeholder('Sélectionnez un type de salle')
+                    ->columnSpanFull(),
+                Textarea::make('description')
+                    ->label('Description')
+                    ->maxLength(500)
+                    ->nullable()
+                    ->placeholder('La salle ... se situe à ..., elle est équipée de ...')
+                    ->columnSpanFull(),
+                Textarea::make('access_condition')
+                    ->label('Conditions d\'accès')
+                    ->maxLength(500)
+                    ->nullable()
+                    ->columnSpanFull()
+                    ->placeholder('L\'accès à la salle n\'est possible que si ...'),
+                Repeater::make('accessibleTimes')
+                    ->relationship('accessibleTimes')
+                    ->schema([
+                        Select::make('weekday')
+                            ->disabled()
+                            ->dehydrated()
+                            ->label('Jour de la semaine')
+                            ->hiddenLabel()
+                            ->columnSpanFull()
+                            ->options([
+                                'Monday'    => 'Monday',
+                                'Tuesday'   => 'Tuesday',
+                                'Wednesday' => 'Wednesday',
+                                'Thursday'  => 'Thursday',
+                                'Friday'    => 'Friday',
+                                'Saturday'  => 'Saturday',
+                                'Sunday'    => 'Sunday',
+                            ]),
+                        Placeholder::make('')
+                            ->content('Laisser vide les deux champs (--:--) si la salle n\'est pas accessible ce jour-là')
+                            ->columnSpanFull(),
+                        TimePicker::make('opens_at')
+                            ->label('Ouverture')
+                            ->nullable()
+                            ->columnSpan(1)
+                            ->seconds(false),
+                        TimePicker::make('closes_at')
+                            ->label('Fermeture')
+                            ->nullable()
+                            ->columnSpan(1)
+                            ->seconds(false),
+                    ])
+                    ->addable(false)
+                    ->columnSpanFull()
+                    ->deletable(false)
+                    ->reorderable(false)
+                    ->columns(4)
+                    ->visible(fn (string $context): bool => $context === 'create') // Only show on creation, use RelationManager for editing
+                    ->default(function () {
+                        // Used only on creation to prefill 7 weekdays
+
+                        return collect([
+                            ['weekday' => 'Monday', 'opens_at' => '08:00', 'closes_at' => '20:00'],
+                            ['weekday' => 'Tuesday', 'opens_at' => '08:00', 'closes_at' => '20:00'],
+                            ['weekday' => 'Wednesday', 'opens_at' => '08:00', 'closes_at' => '20:00'],
+                            ['weekday' => 'Thursday', 'opens_at' => '08:00', 'closes_at' => '20:00'],
+                            ['weekday' => 'Friday', 'opens_at' => '08:00', 'closes_at' => '20:00'],
+                            ['weekday' => 'Saturday', 'opens_at' => '08:00', 'closes_at' => '20:00'],
+                            ['weekday' => 'Sunday', 'opens_at' => null, 'closes_at' => null],
+                        ]);
+                    })
             ]);
     }
 
@@ -37,10 +126,13 @@ class RoomResource extends Resource
                     ->label('Type de salle')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('roomType.booking_perso_allowed')
-                    ->label('Réservation individuelle autorisée')
-                    ->boolean()
+                Tables\Columns\TextColumn::make('capacity')
+                    ->label('Capacité')
+                    ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('description')
+                    ->label('Description')
+                    ->limit(50)
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('roomType')
@@ -62,7 +154,7 @@ class RoomResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\RoomTypeRelationManager::class
+            RelationManagers\AccessibleTimeRelationManager::class,
         ];
     }
 

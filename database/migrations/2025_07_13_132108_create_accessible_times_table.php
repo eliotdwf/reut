@@ -20,6 +20,7 @@ return new class extends Migration
             $table->time('closes_at')->nullable();
             $table->enum('weekday', ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'])
                 ->comment('The day of the week this time slot applies to');
+            $table->unique(['room_id', 'weekday']);
         });
     }
 

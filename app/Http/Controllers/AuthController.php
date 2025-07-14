@@ -53,7 +53,12 @@ class AuthController extends Controller
     {
 
         // Save the previous URL as the intended url to redirect after login
-        $request->session()->put('url.intended', url()->previous());
+        if(!$request->session()->has('url.intended')) {
+            Log::debug("Setting intended URL to previous URL: " . url()->previous());
+            $request->session()->put('url.intended', url()->previous());
+        } else {
+            Log::debug("Intended URL already set: " . $request->session()->get('url.intended'));
+        }
 
         // Generate a random state parameter
         $state = bin2hex(random_bytes(16));
@@ -128,8 +133,9 @@ class AuthController extends Controller
             info("User permissions stored in session: ", $request->session()->get('user_permissions'));
 
             // Redirect to the intended url or home if not set
-            Log::debug("Redirecting to intended URL: " . $request->session()->get('url.intended'));
+            info("Redirecting to intended URL: " . $request->session()->get('url.intended'));
             return redirect()->intended(RouteServiceProvider::HOME)->with('theme-dark', $user->dark_theme);
+            //return redirect($request->session()->pull('url.intended'))->with('theme-dark', $user->dark_theme);
 
         } catch (IdentityProviderException $e) {
             abort(400, 'Authentication failed: ' . $e->getMessage());

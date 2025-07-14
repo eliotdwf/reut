@@ -15,13 +15,13 @@ class AccessibleTimeSeeder extends Seeder
     public function run(): void
     {
         $accessibleTimes = [
-            ['day' => 'Monday', 'start_time' => '08:00:00', 'end_time' => '20:00:00'],
-            ['day' => 'Tuesday', 'start_time' => '08:00:00', 'end_time' => '20:00:00'],
-            ['day' => 'Wednesday', 'start_time' => '08:00:00', 'end_time' => '20:00:00'],
-            ['day' => 'Thursday', 'start_time' => '08:00:00', 'end_time' => '20:00:00'],
-            ['day' => 'Friday', 'start_time' => '08:00:00', 'end_time' => '20:00:00'],
-            ['day' => 'Saturday', 'start_time' => '09:00:00', 'end_time' => '18:00:00'],
-            ['day' => 'Sunday', 'start_time' => null, 'end_time' => null], // Closed on Sundays
+            ['weekday' => 'Monday', 'opens_at' => '08:00:00', 'closes_at' => '20:00:00'],
+            ['weekday' => 'Tuesday', 'opens_at' => '08:00:00', 'closes_at' => '20:00:00'],
+            ['weekday' => 'Wednesday', 'opens_at' => '08:00:00', 'closes_at' => '20:00:00'],
+            ['weekday' => 'Thursday', 'opens_at' => '08:00:00', 'closes_at' => '20:00:00'],
+            ['weekday' => 'Friday', 'opens_at' => '08:00:00', 'closes_at' => '20:00:00'],
+            ['weekday' => 'Saturday', 'opens_at' => '09:00:00', 'closes_at' => '18:00:00'],
+            ['weekday' => 'Sunday', 'opens_at' => null, 'closes_at' => null], // Closed on Sundays
         ];
         // retrieve all rooms from database and add a new accessible time for each room
         $rooms = Room::all();
@@ -29,9 +29,9 @@ class AccessibleTimeSeeder extends Seeder
             foreach ($accessibleTimes as $time) {
                 AccessibleTime::create([
                     'room_id' => $room->id,
-                    'opens_at' => $time['start_time'],
-                    'closes_at' => $time['end_time'],
-                    'weekday' => $time['day'],
+                    'opens_at' => $time['opens_at'],
+                    'closes_at' => $time['closes_at'],
+                    'weekday' => $time['weekday'],
                 ]);
             }
         }
