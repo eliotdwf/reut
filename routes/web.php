@@ -29,7 +29,7 @@ Route::prefix('/auth')->name('auth.')->group(function () {
     });
 });
 
-// Add a fallback route for login if needed
+// Add a fallback route for logout for filament
 Route::get('/login', function (Request $request) {
     // chek if url intended is set in the session
     if (!$request->session()->has('url.intended')) {

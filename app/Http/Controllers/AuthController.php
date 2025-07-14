@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Permission;
 use App\Providers\RouteServiceProvider;
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
@@ -21,6 +22,7 @@ class AuthController extends Controller
      * @var GenericProvider
      */
     public GenericProvider $provider;
+    private string $currentAssociationsUrl;
 
     /**
      * Create a new AuthController instance.
@@ -149,8 +151,12 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
+        info("Logging out user: " . auth()->user()->id);
         // Clear the user's session data
         $request->session()->forget('user');
+
+        Filament::auth()->logout();
+        info("Filament user logged out successfully");
 
         // Log the user out
         Auth::guard('web')->logout();
@@ -160,6 +166,7 @@ class AuthController extends Controller
 
         // Regenerate the CSRF token
         $request->session()->regenerateToken();
+        info("User logged out successfully, redirecting to ". config('services.oauth.logout_url'));
 
         return redirect(config('services.oauth.logout_url'));
     }
