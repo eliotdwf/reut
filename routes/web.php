@@ -6,10 +6,10 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 
-Route::middleware('auth')->get('/', function (Request $request) {
+/*Route::middleware('auth')->get('/', function (Request $request) {
     Log::debug('User is authenticated, rendering home page with permissions', $request->session()->get('user_permissions', []));
     return Inertia::render("Home")->with('user_permissions', $request->session()->get('user_permissions', []));
-})->name('home');
+})->name('home');*/
 
 
 Route::get('/calendar', function () {

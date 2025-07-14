@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\Permission;
 use App\Filament\Resources\RoomTypeResource\Pages;
 use App\Filament\Resources\RoomTypeResource\RelationManagers;
 use App\Models\RoomType;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -82,5 +84,13 @@ class RoomTypeResource extends Resource
             'create' => Pages\CreateRoomType::route('/create'),
             'edit' => Pages\EditRoomType::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * @return string|null
+     */
+    public static function canAccess(): bool
+    {
+        return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
     }
 }

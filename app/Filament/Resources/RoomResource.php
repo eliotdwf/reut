@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\Permission;
 use App\Filament\Resources\RoomResource\Pages;
 use App\Filament\Resources\RoomResource\RelationManagers;
 use App\Models\Room;
@@ -165,5 +166,13 @@ class RoomResource extends Resource
             'create' => Pages\CreateRoom::route('/create'),
             'edit' => Pages\EditRoom::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * @return string|null
+     */
+    public static function canAccess(): bool
+    {
+        return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
     }
 }

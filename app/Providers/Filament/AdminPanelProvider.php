@@ -24,8 +24,8 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
-            ->id('admin')
-            ->path('admin')
+            ->id('home')
+            ->path('')
             ->colors([
                 'primary' => Color::Pink,
             ])
@@ -37,7 +37,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -52,6 +51,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            ->favicon(asset('images/reut.png'))
+            ->brandLogo(asset('images/reut.png'))
+            ->brandLogoHeight('3rem')
+            ->brandName('RéUT - Réservation des salles de réunion')
+            ->darkMode(false);
     }
 }
