@@ -6,6 +6,7 @@ use App\Enums\Permission;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Facades\Log;
@@ -32,6 +33,17 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function assosMemberships(): HasMany
     {
         return $this->hasMany(AssoMember::class);
+    }
+
+    public function assos(): BelongsToMany
+    {
+        return $this->belongsToMany(Asso::class, 'asso_members', 'user_id', 'asso_id')
+            ->withPivot('role_id');
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
     }
 
     /**
@@ -99,7 +111,7 @@ class User extends Authenticatable implements FilamentUser, HasName
             $globalDefaultPermissions = config("access.allowed.*.*", []);
 
             // merge all the user permissions
-            $userPermissions = (array)array_merge($userPermissions, $configPermissions, $defaultRolePermissions,$defaultAssociationPermissions ,$globalDefaultPermissions);
+            $userPermissions = (array)array_merge($userPermissions, $configPermissions, $defaultRolePermissions, $defaultAssociationPermissions, $globalDefaultPermissions);
         }
         return array_unique($userPermissions);
     }
@@ -113,4 +125,30 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    /**
+     * Returns true if the user can book a room for himself and not for an association.
+     * This is based on whether the user has already reached the maximum time of personal bookings for the current week
+     * @return bool
+     */
+    public function canMakePersoBooking(): bool
+    {
+        return false;
+//        // Get the current week start and end dates
+//        $weekStart = now()->startOfWeek();
+//        $weekEnd = now()->endOfWeek();
+//
+//        // Count the time of personal bookings made by the user in the current week
+//        $personalBookingsCount = $this->bookings()
+//            ->where('booking_perso', true)
+//            ->whereBetween('starts_at', [$weekStart, $weekEnd]);
+//
+//        $bookingTime = 0;
+//        foreach ($personalBookingsCount->get() as $booking) {
+//            $bookingTime += $booking->ends_at->diffInMinutes($booking->starts_at);
+//        }
+//
+//        return $bookingTime < 180; // 3 hours maximum personal booking time
+    }
+
 }

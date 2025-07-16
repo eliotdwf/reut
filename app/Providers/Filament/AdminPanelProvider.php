@@ -17,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -36,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
+                //Widgets\AccountWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -56,6 +57,15 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(asset('images/reut.png'))
             ->brandLogoHeight('3rem')
             ->brandName('RéUT - Réservation des salles de réunion')
-            ->darkMode(false);
+            ->darkMode(false)
+            ->plugin(FilamentFullCalendarPlugin::make()
+                ->schedulerLicenseKey('CC-Attribution-NonCommercial-NoDerivatives')
+                ->selectable()
+                ->editable()
+                ->timezone(config('app.timezone'))
+                ->locale('fr')
+                ->plugins(['dayGrid', 'timeGrid'])
+                ->config([])
+            );
     }
 }

@@ -20,6 +20,7 @@ class AccessibleTimeRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Select::make('weekday')
                     ->label('Jour de la semaine')
+                    ->dehydrated()
                     ->options([
                         'Monday'    => 'Monday',
                         'Tuesday'   => 'Tuesday',
