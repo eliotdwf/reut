@@ -16,6 +16,11 @@ class Room extends Model
         'access_conditions'
     ];
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     public function accessibleTimes(): HasMany
     {
         return $this->hasMany(AccessibleTime::class);

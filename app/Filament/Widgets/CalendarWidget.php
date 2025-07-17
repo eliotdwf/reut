@@ -18,33 +18,6 @@ class CalendarWidget extends FullCalendarWidget
 
     //protected static string $view = 'filament.widgets.calendar-widget';
 
-    /**
-     * FullCalendar will call this function whenever it needs new event data.
-     * This is triggered when the user clicks prev/next or switches views on the calendar.
-     */
-    public function fetchEvents(array $fetchInfo): array
-    {
-        return Booking::query()
-            ->where('starts_at', '>=', $fetchInfo['start'])
-            ->where('ends_at', '<=', $fetchInfo['end'])
-            ->whereIn('room_id', $this->selectedRoomIDs)
-            ->get()
-            ->map(
-                fn(Booking $booking) => [
-                    'id' => $booking->id,
-                    'title' => $booking->title,
-                    'start' => $booking->starts_at,
-                    'end' => $booking->ends_at,
-                    'url' => BookingResource::getUrl(name: 'edit', parameters: ['record' => $booking]),
-                    'shouldOpenUrlInNewTab' => true,
-                    'color' => $booking->room->color ?: '#FDCCE0', // Default color if room is not set
-                ]
-            )
-            ->all();
-    }
-
-    public string|null|Model $model = Booking::class;
-
     public function config(): array
     {
         return [
@@ -63,6 +36,42 @@ class CalendarWidget extends FullCalendarWidget
         ];
     }
 
+
+    /**
+     * FullCalendar will call this function whenever it needs new event data.
+     * This is triggered when the user clicks prev/next or switches views on the calendar.
+     */
+    public function fetchEvents(array $fetchInfo): array
+    {
+        return Booking::query()
+            ->where('starts_at', '>=', $fetchInfo['start'])
+            ->where('ends_at', '<=', $fetchInfo['end'])
+            ->whereIn('room_id', $this->selectedRoomIDs)
+            ->get()
+            ->map(
+                function (Booking $booking) {
+                    $room = $booking->room->name;
+                    return [
+                        'id' => $booking->id,
+                        'title' => "$booking->title - $room",
+                        'start' => $booking->starts_at,
+                        'end' => $booking->ends_at,
+                        'url' => BookingResource::getUrl(name: 'edit', parameters: ['record' => $booking]),
+                        'shouldOpenUrlInNewTab' => true,
+                        'color' => $booking->room->color ?: '#FDCCE0', // Default color if room is not set
+                        'extendedProps' => [
+                            'room' => $room,
+                            'bookingFor' => $booking->booking_perso ? 'Personnelle' : $booking->asso->shortname,
+                            'bookingOpenness' => $booking->open_to_others ? "\n(Ouvert à tous)" : ''
+                        ],
+                    ];
+                }
+            )
+            ->all();
+    }
+
+    public string|null|Model $model = Booking::class;
+
     /**
      * Add a JS tooltip to display the booking title when it is hovered.
      * @return string
@@ -73,6 +82,18 @@ class CalendarWidget extends FullCalendarWidget
         function({ event, timeText, isStart, isEnd, isMirror, isPast, isFuture, isToday, el, view }){
             el.setAttribute("x-tooltip", "tooltip");
             el.setAttribute("x-data", "{ tooltip: '"+event.title+"' }");
+
+            const calendar = view.calendar;
+
+            // Apply different view and toolbar for smaller screens
+            if (window.innerWidth < 768) {
+                calendar.changeView('timeGridDay');
+                calendar.setOption('headerToolbar', {
+                    left: 'today',
+                    center: '',
+                    right: 'prev,next'
+                });
+            }
         }
     JS;
     }
@@ -97,7 +118,7 @@ class CalendarWidget extends FullCalendarWidget
                 ->form($this->getFormSchema())
                 ->icon('heroicon-o-plus')
                 ->createAnother(false)
-                ->after(fn () => $this->refreshRecords()),
+                ->after(fn() => $this->refreshRecords()),
         ];
     }
 
