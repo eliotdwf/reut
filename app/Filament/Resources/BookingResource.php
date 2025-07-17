@@ -178,4 +178,10 @@ class BookingResource extends Resource
                 ]),
         ];
     }
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
+        //return auth()->user()->hasPermissions([Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value, Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value], false);
+    }
 }

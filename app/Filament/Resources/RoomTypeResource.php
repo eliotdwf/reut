@@ -92,5 +92,6 @@ class RoomTypeResource extends Resource
     public static function canAccess(): bool
     {
         return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
+        //return auth()->user()->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value);
     }
 }

@@ -7,6 +7,8 @@ use App\Filament\Resources\RoomResource\Pages;
 use App\Filament\Resources\RoomResource\RelationManagers;
 use App\Models\Room;
 use App\Models\RoomType;
+use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -17,11 +19,11 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class RoomResource extends Resource
 {
     protected static ?string $model = Room::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
@@ -31,14 +33,25 @@ class RoomResource extends Resource
                 TextInput::make('name')
                     ->label('Nom de la salle')
                     ->required()
-                    ->unique()
-                    ->maxLength(255),
-                TextInput::make('capacity')
-                    ->label('Capacité')
-                    ->numeric()
-                    ->nullable()
-                    ->minValue(1)
-                    ->maxValue(100),
+                    ->unique(ignoreRecord: true)
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                Grid::make()
+                    ->schema([
+                        TextInput::make('capacity')
+                            ->label('Capacité')
+                            ->numeric()
+                            ->nullable()
+                            ->helperText('Nombre maximum de personnes dans la salle')
+                            ->minValue(1)
+                            ->maxValue(100),
+                        ColorPicker::make('color')
+                            ->label('Couleur')
+                            ->unique(ignoreRecord: true)
+                            ->regex('/^#([a-f0-9]{6}|[a-f0-9]{3}|[A-F0-9]{6}|[A-F0-9]{3})\b$/')
+                            ->default('#FF5733')
+                            ->helperText(new HtmlString('Utilisez un code couleur hexadécimal, par exemple <code>#FF5733</code>')),
+                    ]),
                 Select::make('room_type_id')
                     ->label('Type de salle')
                     ->relationship('roomType', 'label')
@@ -119,6 +132,8 @@ class RoomResource extends Resource
         return $table
             ->defaultPaginationPageOption(25)
             ->columns([
+                Tables\Columns\ColorColumn::make('color')
+                    ->label('Couleur'),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nom de la salle')
                     ->searchable()
@@ -174,5 +189,6 @@ class RoomResource extends Resource
     public static function canAccess(): bool
     {
         return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
+        //return auth()->user()->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value);
     }
 }

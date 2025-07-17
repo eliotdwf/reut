@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Resources\BookingResource;
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
@@ -12,9 +13,9 @@ use Illuminate\Http\Request;
 })->name('home');*/
 
 
-Route::get('/calendar', function () {
+/*Route::get('/calendar', function () {
     return Inertia::render('CalendarPage');
-});
+});*/
 
 Route::prefix('/auth')->name('auth.')->group(function () {
     Route::get('/login', [AuthController::class, 'login'])
@@ -28,6 +29,11 @@ Route::prefix('/auth')->name('auth.')->group(function () {
             ->name('logout');
     });
 });
+
+Route::get('/', function () {
+    return redirect(\App\Filament\Pages\Calendar::getUrl(panel: 'main'));
+});
+
 
 // Add a fallback route for logout for filament
 Route::get('/login', function (Request $request) {

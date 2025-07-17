@@ -2,10 +2,18 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Calendar;
+use App\Filament\Resources\BookingResource;
+use App\Filament\Resources\RoomResource;
+use App\Filament\Resources\RoomTypeResource;
+use App\Models\Booking;
+use App\Models\Room;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationBuilder;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -19,13 +27,14 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 
-class AdminPanelProvider extends PanelProvider
+class MainPanelProvider extends PanelProvider
 {
+
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->default()
-            ->id('home')
+            ->id('main')
             ->path('')
             ->colors([
                 'primary' => Color::Pink,
@@ -33,7 +42,8 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                //Pages\Dashboard::class,
+                Calendar::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
@@ -66,6 +76,7 @@ class AdminPanelProvider extends PanelProvider
                 ->locale('fr')
                 ->plugins(['dayGrid', 'timeGrid'])
                 ->config([])
-            );
+            )
+            ->sidebarCollapsibleOnDesktop();
     }
 }

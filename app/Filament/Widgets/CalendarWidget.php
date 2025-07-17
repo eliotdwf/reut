@@ -2,21 +2,10 @@
 
 namespace App\Filament\Widgets;
 
-use App\Enums\Permission;
 use App\Filament\Resources\BookingResource;
 use App\Models\Booking;
-use App\Models\Room;
-use App\Models\User;
-use Closure;
 use Filament\Actions\CreateAction;
-use Filament\Forms\Components\Checkbox;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Illuminate\Database\Eloquent\Model;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 
@@ -24,6 +13,8 @@ class CalendarWidget extends FullCalendarWidget
 {
 
     use InteractsWithForms;
+
+    public array $selectedRoomIDs = [];
 
     //protected static string $view = 'filament.widgets.calendar-widget';
 
@@ -36,6 +27,7 @@ class CalendarWidget extends FullCalendarWidget
         return Booking::query()
             ->where('starts_at', '>=', $fetchInfo['start'])
             ->where('ends_at', '<=', $fetchInfo['end'])
+            ->whereIn('room_id', $this->selectedRoomIDs)
             ->get()
             ->map(
                 fn(Booking $booking) => [
@@ -44,7 +36,8 @@ class CalendarWidget extends FullCalendarWidget
                     'start' => $booking->starts_at,
                     'end' => $booking->ends_at,
                     'url' => BookingResource::getUrl(name: 'edit', parameters: ['record' => $booking]),
-                    'shouldOpenUrlInNewTab' => true
+                    'shouldOpenUrlInNewTab' => true,
+                    'color' => $booking->room->color ?: '#FDCCE0', // Default color if room is not set
                 ]
             )
             ->all();
@@ -55,13 +48,33 @@ class CalendarWidget extends FullCalendarWidget
     public function config(): array
     {
         return [
-            'firstDay' => 1,
+            'firstDay' => 1,                // Monday as the first day of the week
+            'allDaySlot' => false,          // disables the "All-day" row
             'headerToolbar' => [
-                'left' => 'dayGridWeek,dayGridDay',
+                'left' => 'timeGridWeek,timeGridDay',
                 'center' => 'title',
                 'right' => 'prev,next today',
             ],
+            'initialView' => 'timeGridWeek', // shows time slots
+            'slotMinTime' => '06:00:00',     // optional: start time
+            'slotMaxTime' => '23:59:59',     // optional: end time
+            'slotDuration' => '00:30:00',    // optional: time slot interval
+            'scrollTime' => '8:00:00',
         ];
+    }
+
+    /**
+     * Add a JS tooltip to display the booking title when it is hovered.
+     * @return string
+     */
+    public function eventDidMount(): string
+    {
+        return <<<JS
+        function({ event, timeText, isStart, isEnd, isMirror, isPast, isFuture, isToday, el, view }){
+            el.setAttribute("x-tooltip", "tooltip");
+            el.setAttribute("x-data", "{ tooltip: '"+event.title+"' }");
+        }
+    JS;
     }
 
     /**
@@ -71,6 +84,7 @@ class CalendarWidget extends FullCalendarWidget
     protected function headerActions(): array
     {
         return [
+            // Action to create a new booking
             CreateAction::make()
                 ->model(Booking::class)
                 ->mutateFormDataUsing(function (array $data): array {
@@ -81,6 +95,9 @@ class CalendarWidget extends FullCalendarWidget
                     ];
                 })
                 ->form($this->getFormSchema())
+                ->icon('heroicon-o-plus')
+                ->createAnother(false)
+                ->after(fn () => $this->refreshRecords()),
         ];
     }
 

@@ -20,6 +20,7 @@ return new class extends Migration
                 ->onDelete('cascade');
             $table->text('access_conditions')->nullable();
             $table->integer('capacity')->nullable();
+            $table->string('color')->unique()->comment('Couleur de la salle utilisée pour l\'affichage du calendrier');
             $table->timestamps();
         });
     }
