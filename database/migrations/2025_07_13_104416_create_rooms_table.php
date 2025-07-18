@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\RoomType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -15,12 +16,10 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->text('description')->nullable();
-            $table->foreignId('room_type_id')
-                ->constrained('room_types')
-                ->onDelete('cascade');
+            $table->enum('room_type',RoomType::values());
             $table->text('access_conditions')->nullable();
             $table->integer('capacity')->nullable();
-            $table->string('color')->unique()->comment('Couleur de la salle utilisée pour l\'affichage du calendrier');
+            $table->string('color')->default('#FF5733')->unique()->comment('Couleur de la salle utilisée pour l\'affichage du calendrier');
             $table->timestamps();
         });
     }

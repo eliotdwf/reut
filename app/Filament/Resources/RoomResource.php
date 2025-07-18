@@ -3,10 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Enums\Permission;
+use App\Enums\RoomType;
 use App\Filament\Resources\RoomResource\Pages;
 use App\Filament\Resources\RoomResource\RelationManagers;
 use App\Models\Room;
-use App\Models\RoomType;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
@@ -47,18 +47,18 @@ class RoomResource extends Resource
                             ->maxValue(100),
                         ColorPicker::make('color')
                             ->label('Couleur')
+                            ->required()
                             ->unique(ignoreRecord: true)
                             ->regex('/^#([a-f0-9]{6}|[a-f0-9]{3}|[A-F0-9]{6}|[A-F0-9]{3})\b$/')
                             ->default('#FF5733')
                             ->helperText(new HtmlString('Utilisez un code couleur hexadécimal, par exemple <code>#FF5733</code>')),
                     ]),
-                Select::make('room_type_id')
+                Select::make('room_type')
                     ->label('Type de salle')
-                    ->relationship('roomType', 'label')
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->options(RoomType::query()->get()->pluck('label', 'id'))
+                    ->options(RoomType::casesAsKeyValueArray(true))
                     ->placeholder('Sélectionnez un type de salle')
                     ->columnSpanFull(),
                 Textarea::make('description')
@@ -138,7 +138,7 @@ class RoomResource extends Resource
                     ->label('Nom de la salle')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('roomType.label')
+                Tables\Columns\TextColumn::make('room_type')
                     ->label('Type de salle')
                     ->searchable()
                     ->sortable(),
@@ -151,10 +151,10 @@ class RoomResource extends Resource
                     ->limit(50)
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('roomType')
+                Tables\Filters\SelectFilter::make('room_type')
                     ->label('Type de salle')
-                    ->relationship('roomType', 'label')
-                    ->options(Room::query()->with('roomType')->get()->pluck('roomType.label', 'id')),
+                    ->multiple()
+                    ->options(RoomType::casesAsKeyValueArray()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

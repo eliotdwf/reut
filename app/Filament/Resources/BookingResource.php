@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\Permission;
+use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource\Pages;
 use App\Filament\Resources\BookingResource\RelationManagers;
 use App\Models\Booking;
@@ -12,18 +13,17 @@ use Closure;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Grid;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\HtmlString;
 
 class BookingResource extends Resource
 {
@@ -69,6 +69,14 @@ class BookingResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                TextEntry::make('title'),
             ]);
     }
 
@@ -152,10 +160,11 @@ class BookingResource extends Resource
                     $query = Room::query();
 
                     if ($get('booking_perso')) {
-                        $query->whereHas('roomType', fn($q) => $q->where('booking_perso_allowed', true));
+                        // retrieve all rooms that allow personal bookings
+                        $query->whereIn('roomType', RoomType::bookingPersoAllowedValues());
                     } else {    // Booking for an association
                         if (!$user->hasPermission(Permission::CREATE_BOOKINGS_MUSIC_DANCE_ROOMS_ASSO->value)) {
-                            $query->whereDoesntHave('roomType', fn($q) => $q->whereIn('label', ['Musique', 'Danse']));
+                            $query->whereNotIn('roomType', [RoomType::MUSIC->value, RoomType::DANCE->value]);
                         }
                     }
                     return $query->get()->pluck('name', 'id');
@@ -179,9 +188,9 @@ class BookingResource extends Resource
         ];
     }
 
-    public static function canAccess(): bool
-    {
-        return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
-        //return auth()->user()->hasPermissions([Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value, Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value], false);
-    }
+    public static function canViewAny(): bool
+      {
+          return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
+          //return auth()->user()->hasPermissions([Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value, Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value], false);
+      }
 }

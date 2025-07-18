@@ -2,11 +2,16 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\Permission;
+use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource;
 use App\Models\Booking;
-use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Model;
+use Saade\FilamentFullCalendar\Actions\CreateAction;
+use Saade\FilamentFullCalendar\Actions\ViewAction;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 
 class CalendarWidget extends FullCalendarWidget
@@ -16,6 +21,9 @@ class CalendarWidget extends FullCalendarWidget
 
     public array $selectedRoomIDs = [];
 
+    public string|null|Model $model = Booking::class;
+
+
     //protected static string $view = 'filament.widgets.calendar-widget';
 
     public function config(): array
@@ -23,6 +31,7 @@ class CalendarWidget extends FullCalendarWidget
         return [
             'firstDay' => 1,                // Monday as the first day of the week
             'allDaySlot' => false,          // disables the "All-day" row
+            'editable' => false,            // disables dragging and resizing
             'headerToolbar' => [
                 'left' => 'timeGridWeek,timeGridDay',
                 'center' => 'title',
@@ -56,21 +65,14 @@ class CalendarWidget extends FullCalendarWidget
                         'title' => "$booking->title - $room",
                         'start' => $booking->starts_at,
                         'end' => $booking->ends_at,
-                        'url' => BookingResource::getUrl(name: 'edit', parameters: ['record' => $booking]),
+                        //'url' => BookingResource::getUrl(name: 'view', parameters: ['record' => $booking]),
                         'shouldOpenUrlInNewTab' => true,
                         'color' => $booking->room->color ?: '#FDCCE0', // Default color if room is not set
-                        'extendedProps' => [
-                            'room' => $room,
-                            'bookingFor' => $booking->booking_perso ? 'Personnelle' : $booking->asso->shortname,
-                            'bookingOpenness' => $booking->open_to_others ? "\n(Ouvert à tous)" : ''
-                        ],
                     ];
                 }
             )
             ->all();
     }
-
-    public string|null|Model $model = Booking::class;
 
     /**
      * Add a JS tooltip to display the booking title when it is hovered.
@@ -96,6 +98,33 @@ class CalendarWidget extends FullCalendarWidget
             }
         }
     JS;
+    }
+
+
+    public function viewAction(): Action
+    {
+        return ViewAction::make()
+            ->infolist([
+                TextEntry::make('title')
+            ])
+            ->modalFooterActions(
+                function (ViewAction $action, FullCalendarWidget $livewire) {
+                    $actions = [];
+                    $user = auth()->user();
+                    $isBookingAuther = $user->id === $this->record->user_id;
+                    $roomType = $this->record->room->room_type;
+                    $canEditDelete = $isBookingAuther ||
+                        (($roomType === RoomType::MUSIC || $roomType === RoomType::DANCE) && $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value)) ||
+                        ($roomType === RoomType::MDE && $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value));
+                    if($canEditDelete) {
+                        // If the user can edit or delete the booking, add the edit and delete actions stored in the Livewire component
+                        $actions = [...$livewire->getCachedModalActions()];
+                    }
+                    return [
+                        ...$actions,
+                        $action->getModalCancelAction()
+                    ];
+                });
     }
 
     /**

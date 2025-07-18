@@ -11,8 +11,9 @@ class Room extends Model
     protected $fillable = [
         'name',
         'description',
-        'room_type_id',
+        'room_type',
         'capacity',
+        'color',
         'access_conditions'
     ];
 
@@ -24,10 +25,5 @@ class Room extends Model
     public function accessibleTimes(): HasMany
     {
         return $this->hasMany(AccessibleTime::class);
-    }
-
-    public function roomType(): BelongsTo
-    {
-        return $this->belongsTo(RoomType::class);
     }
 }

@@ -3,22 +3,13 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Calendar;
-use App\Filament\Resources\BookingResource;
-use App\Filament\Resources\RoomResource;
-use App\Filament\Resources\RoomTypeResource;
-use App\Models\Booking;
-use App\Models\Room;
-use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationBuilder;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
