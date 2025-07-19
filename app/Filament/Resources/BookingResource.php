@@ -13,6 +13,7 @@ use Closure;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -23,7 +24,6 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Model;
 
 class BookingResource extends Resource
 {
@@ -148,7 +148,6 @@ class BookingResource extends Resource
                 ->searchable()
                 ->required(fn(Get $get) => !$get('booking_perso'))
                 ->placeholder('Sélectionnez une association')
-                ->helperText('Laissez vide si la réservation est personnelle.')
                 ->visible(fn(Get $get) => !$get('booking_perso'))
                 ->columnSpanFull(),
             Select::make('room_id')
@@ -161,16 +160,17 @@ class BookingResource extends Resource
 
                     if ($get('booking_perso')) {
                         // retrieve all rooms that allow personal bookings
-                        $query->whereIn('roomType', RoomType::bookingPersoAllowedValues());
+                        $query->whereIn('room_type', RoomType::bookingPersoAllowedValues());
                     } else {    // Booking for an association
                         if (!$user->hasPermission(Permission::CREATE_BOOKINGS_MUSIC_DANCE_ROOMS_ASSO->value)) {
-                            $query->whereNotIn('roomType', [RoomType::MUSIC->value, RoomType::DANCE->value]);
+                            $query->whereNotIn('room_type', [RoomType::MUSIC->value, RoomType::DANCE->value]);
                         }
                     }
                     return $query->get()->pluck('name', 'id');
 
                 })
                 ->required()
+                ->afterStateUpdated(fn(Set $set) => $set('conditionCheck', false))
                 ->helperText('Certaines salles peuvent ne pas apparaître en fonction de votre rôle sur le portail des assos et de si la réservation est une réservation personnelle ou non.')
                 // ->searchable() // seem to break the options when reactive functionality
                 ->columnSpanFull(),
@@ -185,6 +185,34 @@ class BookingResource extends Resource
                         ->default(time() + 60 * 60) // Set default to now + 1 hour
                         ->required(),
                 ]),
+            Placeholder::make("roomAccessConditions")
+                ->label('Conditions d\'accès à la salle')
+                ->visible(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null))
+                ->content(function (Get $get) {
+                    $roomId = $get('room_id');
+                    if ($roomId) {
+                        $room = Room::find($roomId);
+                        if ($room) {
+                            if (!$room->access_conditions) {
+                                return 'Aucune condition d\'accès définie pour cette salle.';
+                            }
+                            else {
+                                return $room->access_conditions;
+                            }
+                        }
+                        else {
+                            return 'Impossible de trouver la salle avec l\'ID ' . $roomId;
+                        }
+                    }
+                    return 'Veuillez séléctionner une salle dans la liste';
+                })
+                ->columnSpanFull(),
+            Checkbox::make('conditionCheck')
+                ->label('J\'ai lu et j\'accepte les conditions d\'accès à la salle')
+                ->required(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null))
+                ->visible(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null))
+                ->dehydrated(false)
+                ->columnSpanFull(),
         ];
     }
 

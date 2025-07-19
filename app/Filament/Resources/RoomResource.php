@@ -67,7 +67,7 @@ class RoomResource extends Resource
                     ->nullable()
                     ->placeholder('La salle ... se situe à ..., elle est équipée de ...')
                     ->columnSpanFull(),
-                Textarea::make('access_condition')
+                Textarea::make('access_conditions')
                     ->label('Conditions d\'accès')
                     ->maxLength(500)
                     ->nullable()
