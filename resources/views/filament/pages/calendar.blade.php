@@ -2,5 +2,6 @@
     {{ $this->form }}
     @livewire(\App\Filament\Widgets\CalendarWidget::class, [
     'selectedRoomIDs' => $selectedRoomIDs,
-    ], key(implode('-', $selectedRoomIDs)))
+    'filterBookingOpenToOthers' => $filterBookingOpenToOthers,
+    ], key(implode('-', $selectedRoomIDs).$filterBookingOpenToOthers))
 </x-filament::page>

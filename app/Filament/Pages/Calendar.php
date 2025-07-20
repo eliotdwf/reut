@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Room;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -15,6 +16,7 @@ class Calendar extends Page implements HasForms
 
     protected static string $view = 'filament.pages.calendar';
 
+    public string|null $filterBookingOpenToOthers = null;
     public array $selectedRoomIDs = [];
     public array $rooms = [];
 
@@ -32,12 +34,30 @@ class Calendar extends Page implements HasForms
     public function getFormSchema(): array
     {
         return [
-            Select::make('selectedRoomIDs')
-                ->label('Filtrer les salles à afficher')
-                ->options(Room::pluck('name', 'id'))
-                ->multiple()
-                ->reactive()
-                ->afterStateUpdated(fn ($state) => $this->selectedRoomIDs = $state),
+            Section::make('Filtres')
+                ->collapsible()
+                ->collapsed()
+                ->columns(1)
+                ->schema([
+                    Select::make('selectedRoomIDs')
+                        ->label('Filtrer les salles à afficher')
+                        ->options(Room::pluck('name', 'id'))
+                        ->multiple()
+                        ->reactive()
+                        ->afterStateUpdated(fn ($state) => $this->selectedRoomIDs = $state),
+                    Select::make('filterBookingOpenToOthers')
+                        ->label('Afficher les réservations ouvertes aux autres')
+                        ->options([
+                            'yes' => 'Oui',
+                            'no' => 'Non',
+                        ])
+                        ->default(null)
+                        ->reactive()
+                        ->afterStateUpdated(function ($state) {
+                            $this->filterBookingOpenToOthers = $state;
+                            info("Booking open to others state updated: {$state}");
+                        }),
+                ]),
         ];
     }
 }

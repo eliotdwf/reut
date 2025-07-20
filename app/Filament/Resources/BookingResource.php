@@ -5,7 +5,6 @@ namespace App\Filament\Resources;
 use App\Enums\Permission;
 use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource\Pages;
-use App\Filament\Resources\BookingResource\RelationManagers;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\User;
@@ -48,6 +47,11 @@ class BookingResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Intitulé')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\IconColumn::make('open_to_others')
+                    ->label('Ouverte aux autres')
+                    ->boolean()
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('starts_at')

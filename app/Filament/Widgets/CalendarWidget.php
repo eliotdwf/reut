@@ -20,6 +20,7 @@ class CalendarWidget extends FullCalendarWidget
     use InteractsWithForms;
 
     public array $selectedRoomIDs = [];
+    public string|null $filterBookingOpenToOthers = null;
 
     public string|null|Model $model = Booking::class;
 
@@ -52,10 +53,23 @@ class CalendarWidget extends FullCalendarWidget
      */
     public function fetchEvents(array $fetchInfo): array
     {
-        return Booking::query()
+        $query = Booking::query()
             ->where('starts_at', '>=', $fetchInfo['start'])
             ->where('ends_at', '<=', $fetchInfo['end'])
-            ->whereIn('room_id', $this->selectedRoomIDs)
+            ->whereIn('room_id', $this->selectedRoomIDs);
+
+        if ($this->filterBookingOpenToOthers != null) {
+            $bookingOpenToOtherBool = match ($this->filterBookingOpenToOthers){
+                'yes' => true,
+                'no' => false,
+                default => null,
+            };
+            if($bookingOpenToOtherBool === true || $bookingOpenToOtherBool === false) { // specify the condition only if it is true or false
+                $query->where('open_to_others', $bookingOpenToOtherBool);
+            }
+
+        }
+        return $query
             ->get()
             ->map(
                 function (Booking $booking) {
@@ -116,7 +130,7 @@ class CalendarWidget extends FullCalendarWidget
                     $canEditDelete = $isBookingAuther ||
                         (($roomType === RoomType::MUSIC || $roomType === RoomType::DANCE) && $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value)) ||
                         ($roomType === RoomType::MDE && $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value));
-                    if($canEditDelete) {
+                    if ($canEditDelete) {
                         // If the user can edit or delete the booking, add the edit and delete actions stored in the Livewire component
                         $actions = [...$livewire->getCachedModalActions()];
                     }
