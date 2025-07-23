@@ -7,9 +7,12 @@ use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource;
 use App\Models\Booking;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\ViewAction;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
@@ -120,6 +123,68 @@ class CalendarWidget extends FullCalendarWidget
         return ViewAction::make()
             ->infolist([
                 TextEntry::make('title')
+                    ->label('Intitulé de la réservation')
+                    ->inlineLabel(),
+                TextEntry::make('starts_at')
+                    ->label('Début de la réservation')
+                    ->dateTime('d/m/Y H:i')
+                    ->inlineLabel(),
+                TextEntry::make('ends_at')
+                    ->label('Début de la réservation')
+                    ->dateTime('d/m/Y H:i')
+                    ->inlineLabel(),
+                TextEntry::make('asso.shortname')
+                    ->label('Association')
+                    ->inlineLabel()
+                    ->visible(fn (Booking $record) => !$record->booking_perso),
+                TextEntry::make('creator.email')
+                    ->label('Créateur de la réservation')
+                    ->inlineLabel()
+                    ->visible(function (Booking $record) {
+                        $currentUser = auth()->user();
+                        $isMDERoom = $record->room->room_type === RoomType::MDE;
+                        $isMusicOrDanceRoom = $record->room->room_type === RoomType::MUSIC || $record->room->room_type === RoomType::DANCE;
+                        $hasPermissionMusicDance = $currentUser->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value);
+                        $hasPermissionMDE = $currentUser->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value);
+                        return ($hasPermissionMDE && $isMDERoom) || ($hasPermissionMusicDance && $isMusicOrDanceRoom)
+                            || $currentUser->id === $record->user_id;
+                    }),
+                Section::make('')
+                    ->schema([
+                        TextEntry::make('booking_perso')
+                            ->formatStateUsing(fn($state) => $state ? 'Réservation personnelle (pas dans le cadre d\'une association)': 'Réservation pour une association')
+                            ->label('')
+                    ])
+                    ->visible(fn (Booking $record) => $record->booking_perso),
+                Section::make('')
+                    ->schema([
+                        TextEntry::make('open_to_others')
+                            ->label('')
+                            ->icon(fn(Booking $record) => $record->open_to_others ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
+                            ->iconColor(fn(Booking $record) => $record->open_to_others ? 'success' : 'danger')
+                            ->formatStateUsing(fn(Booking $record) => $record->open_to_others ? 'Réservation publique, ouverte aux autres' : 'Réservation privée, fermée aux autres'),
+                    ]),
+                Section::make(fn ($record) => 'À propos de la salle : ' . $record->room->name)
+                    ->collapsible()
+                    ->collapsed()
+                    ->schema([
+                        TextEntry::make('room.name')
+                            ->inlineLabel()
+                            ->label('Salle'),
+                        TextEntry::make('room.capacity')
+                            ->inlineLabel()
+                            ->label('Capacité maximale')
+                            ->formatStateUsing(fn($state) => $state ? $state . ' personnes' : null)
+                            ->placeholder('Non renseignée'),
+                        TextEntry::make('room.description')
+                            ->label('Description de la salle')
+                            ->inlineLabel()
+                            ->placeholder('Aucune description renseignée'),
+                        TextEntry::make('room.access_conditions')
+                            ->inlineLabel()
+                            ->placeholder('Aucune condition d\'accès renseignée')
+                            ->label('Conditions d\'accès'),
+                    ])
             ])
             ->modalFooterActions(
                 function (ViewAction $action, FullCalendarWidget $livewire) {

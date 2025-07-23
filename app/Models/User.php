@@ -133,22 +133,22 @@ class User extends Authenticatable implements FilamentUser, HasName
      */
     public function canMakePersoBooking(): bool
     {
-        return false;
-//        // Get the current week start and end dates
-//        $weekStart = now()->startOfWeek();
-//        $weekEnd = now()->endOfWeek();
-//
-//        // Count the time of personal bookings made by the user in the current week
-//        $personalBookingsCount = $this->bookings()
-//            ->where('booking_perso', true)
-//            ->whereBetween('starts_at', [$weekStart, $weekEnd]);
-//
-//        $bookingTime = 0;
-//        foreach ($personalBookingsCount->get() as $booking) {
-//            $bookingTime += $booking->ends_at->diffInMinutes($booking->starts_at);
-//        }
-//
-//        return $bookingTime < 180; // 3 hours maximum personal booking time
+        //return false;
+        // Get the current week start and end dates
+        $weekStart = now()->startOfWeek();
+        $weekEnd = now()->endOfWeek();
+
+        // Count the time of personal bookings made by the user in the current week
+        $personalBookingsCount = $this->bookings()
+            ->where('booking_perso', true)
+            ->whereBetween('starts_at', [$weekStart, $weekEnd]);
+
+        $bookingTime = 0;
+        foreach ($personalBookingsCount->get() as $booking) {
+            $bookingTime += $booking->ends_at->diffInMinutes($booking->starts_at);
+        }
+
+        return $bookingTime < 180; // 3 hours maximum personal booking time
     }
 
 }
