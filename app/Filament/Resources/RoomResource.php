@@ -7,6 +7,7 @@ use App\Enums\RoomType;
 use App\Filament\Resources\RoomResource\Pages;
 use App\Filament\Resources\RoomResource\RelationManagers;
 use App\Models\Room;
+use Closure;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
@@ -16,6 +17,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -49,7 +51,7 @@ class RoomResource extends Resource
                             ->label('Couleur')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->regex('/^#([a-f0-9]{6}|[a-f0-9]{3}|[A-F0-9]{6}|[A-F0-9]{3})\b$/')
+                            ->hexColor()
                             ->default('#FF5733')
                             ->helperText(new HtmlString('Utilisez un code couleur hexadécimal, par exemple <code>#FF5733</code>')),
                     ]),
@@ -101,6 +103,13 @@ class RoomResource extends Resource
                             ->seconds(false),
                         TimePicker::make('closes_at')
                             ->label('Fermeture')
+                            ->rules([
+                                fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
+                                    if($state <= $get('opens_at')) {
+                                        $fail('La fermeture doit être après l\'ouverture.');
+                                    }
+                                }
+                            ])
                             ->nullable()
                             ->columnSpan(1)
                             ->seconds(false),

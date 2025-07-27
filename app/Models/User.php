@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\Permission;
+use Carbon\Carbon;
+use DateTime;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Filament\Panel;
@@ -131,9 +133,14 @@ class User extends Authenticatable implements FilamentUser, HasName
      * This is based on whether the user has already reached the maximum time of personal bookings for the current week
      * @return bool
      */
-    public function canMakePersoBooking(): bool
+    public function canMakePersoBooking(DateTime $starts_at, DateTime $ends_at): bool
     {
-        //return false;
+
+        //return false; // test the validation of the booking time
+
+        // calculate time in minutes between the start and end of the booking
+        $bookingTime = Carbon::instance($starts_at)->diffInMinutes(Carbon::instance($ends_at));
+
         // Get the current week start and end dates
         $weekStart = now()->startOfWeek();
         $weekEnd = now()->endOfWeek();
@@ -143,12 +150,11 @@ class User extends Authenticatable implements FilamentUser, HasName
             ->where('booking_perso', true)
             ->whereBetween('starts_at', [$weekStart, $weekEnd]);
 
-        $bookingTime = 0;
         foreach ($personalBookingsCount->get() as $booking) {
             $bookingTime += $booking->ends_at->diffInMinutes($booking->starts_at);
         }
 
-        return $bookingTime < 180; // 3 hours maximum personal booking time
+        return $bookingTime < env('MAX_MINUTES_BOOKING_PERSO_PER_WEEK', 180); // 3 hours maximum personal booking time
     }
 
 }

@@ -8,6 +8,7 @@ use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\User;
+use Carbon\Carbon;
 use Closure;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
@@ -23,6 +24,7 @@ use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 
 class BookingResource extends Resource
 {
@@ -126,11 +128,11 @@ class BookingResource extends Resource
                         ->default(false)
                         ->rules(
                             [
-                                fn($state): Closure => function (string $attribute, $value, Closure $fail) use ($state) {
+                                fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
                                     $user = auth()->user();
-                                    if ($state === true && !$user->canMakePersoBooking()) {
+                                    if ($state === true && !$user->canMakePersoBooking($get('starts_at'), $get('ends_at'))) {
                                         // If the user cannot make personal bookings because he has reached the limit, we return a custom validation rule
-                                        $fail('Vous avez atteint la limite de réservations personnelles pour cette semaine (3h max). Vous pouvez uniquement faire une réservation pour votre association.');
+                                        $fail('Vous avez atteint la limite de réservations personnelles pour cette semaine (3h max). Vous pouvez uniquement faire une réservation pour vos associations.');
                                     }
                                 },
                             ])
@@ -182,12 +184,93 @@ class BookingResource extends Resource
                 ->schema([
                     DateTimePicker::make('starts_at')
                         ->label('Début')
-                        ->default(now()) // Set default to current time
+                        ->reactive()
+                        ->minDate(now())
+                        ->default(time()+5*60) // Set default to current time + 5 minutes
+                        ->rules([
+                            fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
+                                // Two validation rules:
+                                // 1. The room must be accessible on the selected day of the week
+                                // 2. The booking start time must be within the room's accessible times for that day
+
+                                $room = Room::find($get('room_id'));
+                                $weekday = Carbon::parse($state)->format('l');
+
+                                $isWeekdayValid = $room->isRoomOpenByWeekday($weekday);
+                                if(!$isWeekdayValid) {
+                                    $fail('La salle n\'est pas accessible le ' . $weekday . '.');
+                                }
+                                else {
+                                    $startsTime = Carbon::parse($state)->format('H:i');
+                                    $startTimeValidationError = $room->checkBookingTimeValid($weekday, $startsTime);
+                                    if($startTimeValidationError) {
+                                        $fail($startTimeValidationError);
+                                    }
+                                }
+                            }
+                        ])
                         ->required(),
                     DateTimePicker::make('ends_at')
                         ->label('Fin')
+                        ->reactive()
+                        ->after('starts_at') // Ensure end time is after start time
+                        ->validationMessages([
+                            'after' => 'L\'heure de fin doit être postérieure à l\'heure de début.',
+                        ])
+                        ->beforeOrEqual(function() {
+                            $currentUser = auth()->user();
+                            if( $currentUser->hasPermission(Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value)) {
+                                return null; // No limit for users with permission to book over two weeks in advance
+                            }
+                            return now()->addWeeks(2); // Limit to two weeks in advance for other users
+                        })
+                        ->rules([
+                            fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
+                                // Three validation rules:
+                                // 1. The weekday of the booking's ending time must be the same as the start of the booking
+                                // 2. The booking end time must be within the room's accessible times for that day
+                                // 3. Check that the booking doesn't overlap with another booking for this room
+
+                                $room = Room::find($get('room_id'));
+                                $weekday = Carbon::parse($state)->format('l');
+
+                                if( Carbon::parse($get('starts_at'))->format('l') !== $weekday) {
+                                    $fail('L\'heure de fin doit être le même jour que l\'heure de début.');
+                                }
+
+                                $endsTime = Carbon::parse($state)->format('H:i');
+                                $endTimeValidationError = $room->checkBookingTimeValid($weekday, $endsTime);
+                                if ($endTimeValidationError) {
+                                    $fail($endTimeValidationError);
+                                }
+
+                                $isRoomAlreadyBooked = $room->isAlreadyBooked(Carbon::parse($get('starts_at')),Carbon::parse($state));
+                                if ($isRoomAlreadyBooked) {
+                                    $fail('La salle est déjà réservée pour cette période.');
+                                }
+                            }
+                        ])
                         ->default(time() + 60 * 60) // Set default to now + 1 hour
                         ->required(),
+                    Placeholder::make('Horaires de la salle')
+                        ->content(function(Get $get) {
+                            $room = Room::find($get('room_id'));
+                            $weekday = Carbon::parse($get('starts_at'))->format('l');
+                            if(!$room) {
+                                return 'Veuillez sélectionner une salle pour afficher les horaires.';
+                            }
+                            $accessibleTimes = $room->accessibleTimes->firstWhere('weekday', $weekday);
+                            if(!$accessibleTimes->opens_at || !$accessibleTimes->closes_at) {
+                                return "La salle n'est pas accessible le " . $weekday . ".";
+                            }
+                            return "La salle est accessible de " . $accessibleTimes->opens_at . " à " . $accessibleTimes->closes_at . " le " . $weekday . ".";
+                        })
+                        ->visible(fn($get) => $get('room_id') && $get('starts_at'))
+                        ->columnSpanFull(),
+                    Placeholder::make('Attention')
+                        ->content(new HtmlString('<i>Vous ne pouvez pas réserver une salle plus de deux semaines à l\'avance.</i>'))
+                        ->columnSpanFull()
+                        ->visible(fn() => !auth()->user()->hasPermission(Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value))
                 ]),
             Placeholder::make("roomAccessConditions")
                 ->label('Conditions d\'accès à la salle')
