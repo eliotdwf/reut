@@ -130,10 +130,6 @@ class AuthController extends Controller
 
             Log::debug("User logged in: " . auth()->user()->id);
 
-            // Update the user's permissions stored in the session
-            $request->session()->put('user_permissions', $user->getPermissions());
-            info("User permissions stored in session: ", $request->session()->get('user_permissions'));
-
             // Redirect to the intended url or home if not set
             info("Redirecting to intended URL: " . $request->session()->get('url.intended'));
             return redirect()->intended(RouteServiceProvider::HOME)->with('theme-dark', $user->dark_theme);

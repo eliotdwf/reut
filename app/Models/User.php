@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\Permission;
+use App\Enums\Permission as PermissionEnum;
+use App\Models\Permission;
 use Carbon\Carbon;
 use DateTime;
 use Filament\Models\Contracts\FilamentUser;
@@ -48,6 +49,11 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->hasMany(Booking::class);
     }
 
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class);
+    }
+
     /**
      * Checks if the user has a specific permission.
      * @param string $permission the permission to check
@@ -66,15 +72,16 @@ class User extends Authenticatable implements FilamentUser, HasName
      */
     public function hasPermissions(array $requiredPermissions, bool $requireAll = true): bool
     {
+
         if (empty($requiredPermissions)) {
             return true; // If no permissions are required, return true
         }
 
-        // retrieve the user permissions from the session
-        $userPermissions = session("user_permissions", $this->getPermissions());
+        // Retrieve the user's permissions from the database
+        $userPermissions = $this->permissions->pluck('value')->toArray();
 
         // If the user has the ALL permission, no need to check specific permissions
-        if (in_array(Permission::ALL->value, $userPermissions)) {
+        if (in_array(PermissionEnum::ALL->value, $userPermissions)) {
             return true;
         }
 
@@ -89,12 +96,11 @@ class User extends Authenticatable implements FilamentUser, HasName
                 return true;
             }
         }
-
         return false;
     }
 
 
-    public function getPermissions(): array
+    /*public function getPermissions(): array
     {
         Log::debug("Collecting permissions for user ID: " . $this->id);
         $userPermissions = [];
@@ -114,13 +120,43 @@ class User extends Authenticatable implements FilamentUser, HasName
 
             // merge all the user permissions
             $userPermissions = (array)array_merge($userPermissions, $configPermissions, $defaultRolePermissions, $defaultAssociationPermissions, $globalDefaultPermissions);
+
         }
         return array_unique($userPermissions);
+    }*/
+
+    public function updatePermissions(): void
+    {
+        Log::debug('Removing all permissions for user ID: ' . $this->id);
+        $this->permissions()->detach();
+
+        Log::debug("Collecting permissions for user ID: " . $this->id);
+        $userPermissions = [];
+
+        foreach ($this->assosMemberships()->get() as $assoMember) {
+            $assoId = $assoMember->asso->id;
+            $roleId = $assoMember->role_id;
+
+            $userPermissions = array_merge(
+                $userPermissions,
+                config("access.allowed.$assoId.$roleId", []),   // Permissions for the association and role
+                config("access.allowed.$assoId.*", []),         // Default permissions for the association
+                config("access.allowed.*.$roleId", []),         // Default permissions for the role
+                config("access.allowed.*.*", [])                // Global default permissions
+            );
+        }
+
+        foreach (PermissionEnum::fromStrings(array_unique($userPermissions)) as $permission) {
+            Log::debug("Registering permission: " . $permission->name . " for user ID: " . $this->id);
+            if ($id = Permission::where('key', $permission->name)->value('id')) {
+                $this->permissions()->attach($id);
+            }
+        }
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasPermission(Permission::MANAGE_ROOMS->value);
+        return $this->hasPermission(PermissionEnum::MANAGE_ROOMS->value);
     }
 
     public function getFilamentName(): string

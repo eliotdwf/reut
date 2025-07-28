@@ -7,12 +7,10 @@ use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource;
 use App\Models\Booking;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\HtmlString;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\ViewAction;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
@@ -140,15 +138,7 @@ class CalendarWidget extends FullCalendarWidget
                 TextEntry::make('creator.email')
                     ->label('Créateur de la réservation')
                     ->inlineLabel()
-                    ->visible(function (Booking $record) {
-                        $currentUser = auth()->user();
-                        $isMDERoom = $record->room->room_type === RoomType::MDE;
-                        $isMusicOrDanceRoom = $record->room->room_type === RoomType::MUSIC || $record->room->room_type === RoomType::DANCE;
-                        $hasPermissionMusicDance = $currentUser->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value);
-                        $hasPermissionMDE = $currentUser->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value);
-                        return ($hasPermissionMDE && $isMDERoom) || ($hasPermissionMusicDance && $isMusicOrDanceRoom)
-                            || $currentUser->id === $record->user_id;
-                    }),
+                    ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user())),
                 Section::make('')
                     ->schema([
                         TextEntry::make('booking_perso')
@@ -189,13 +179,7 @@ class CalendarWidget extends FullCalendarWidget
             ->modalFooterActions(
                 function (ViewAction $action, FullCalendarWidget $livewire) {
                     $actions = [];
-                    $user = auth()->user();
-                    $isBookingAuther = $user->id === $this->record->user_id;
-                    $roomType = $this->record->room->room_type;
-                    $canEditDelete = $isBookingAuther ||
-                        (($roomType === RoomType::MUSIC || $roomType === RoomType::DANCE) && $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value)) ||
-                        ($roomType === RoomType::MDE && $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value));
-                    if ($canEditDelete) {
+                    if ($this->record->canUserUpdateDelete(auth()->user())) {
                         // If the user can edit or delete the booking, add the edit and delete actions stored in the Livewire component
                         $actions = [...$livewire->getCachedModalActions()];
                     }

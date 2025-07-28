@@ -14,6 +14,7 @@ use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -69,12 +70,16 @@ class BookingResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user())),
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user()))
+                ])
+                ->tooltip('Actions')
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                //
             ]);
     }
 
@@ -112,6 +117,7 @@ class BookingResource extends Resource
             TextInput::make('user_id')
                 ->label('Créateur de la réservation')
                 ->disabled()
+                ->columnSpanFull()
                 ->formatStateUsing(function ($state) {
                     return User::find($state)->email ?? 'Impossible de récupérer le créateur de la réservation';
                 })
@@ -231,13 +237,15 @@ class BookingResource extends Resource
                                 // 2. The booking end time must be within the room's accessible times for that day
                                 // 3. Check that the booking doesn't overlap with another booking for this room
 
-                                $room = Room::find($get('room_id'));
-                                $weekday = Carbon::parse($state)->format('l');
-
-                                if( Carbon::parse($get('starts_at'))->format('l') !== $weekday) {
+                                // compare the date of the start and end times
+                                $startsAtDate = Carbon::parse($get('starts_at'))->format('Y-m-d');
+                                $endsAtDate = Carbon::parse($state)->format('Y-m-d');
+                                if ($startsAtDate !== $endsAtDate) {
                                     $fail('L\'heure de fin doit être le même jour que l\'heure de début.');
                                 }
 
+                                $room = Room::find($get('room_id'));
+                                $weekday = Carbon::parse($state)->format('l');
                                 $endsTime = Carbon::parse($state)->format('H:i');
                                 $endTimeValidationError = $room->checkBookingTimeValid($weekday, $endsTime);
                                 if ($endTimeValidationError) {
@@ -272,34 +280,36 @@ class BookingResource extends Resource
                         ->columnSpanFull()
                         ->visible(fn() => !auth()->user()->hasPermission(Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value))
                 ]),
-            Placeholder::make("roomAccessConditions")
-                ->label('Conditions d\'accès à la salle')
-                ->visible(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null))
-                ->content(function (Get $get) {
-                    $roomId = $get('room_id');
-                    if ($roomId) {
-                        $room = Room::find($roomId);
-                        if ($room) {
-                            if (!$room->access_conditions) {
-                                return 'Aucune condition d\'accès définie pour cette salle.';
+            Section::make()
+                ->schema([
+                    Placeholder::make("roomAccessConditions")
+                        ->label('Conditions d\'accès à la salle')
+                        ->content(function (Get $get) {
+                            $roomId = $get('room_id');
+                            if ($roomId) {
+                                $room = Room::find($roomId);
+                                if ($room) {
+                                    if (!$room->access_conditions) {
+                                        return 'Aucune condition d\'accès définie pour cette salle.';
+                                    }
+                                    else {
+                                        return $room->access_conditions;
+                                    }
+                                }
+                                else {
+                                    return 'Impossible de trouver la salle avec l\'ID ' . $roomId;
+                                }
                             }
-                            else {
-                                return $room->access_conditions;
-                            }
-                        }
-                        else {
-                            return 'Impossible de trouver la salle avec l\'ID ' . $roomId;
-                        }
-                    }
-                    return 'Veuillez séléctionner une salle dans la liste';
-                })
-                ->columnSpanFull(),
-            Checkbox::make('conditionCheck')
-                ->label('J\'ai lu et j\'accepte les conditions d\'accès à la salle')
-                ->required(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null))
-                ->visible(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null))
-                ->dehydrated(false)
-                ->columnSpanFull(),
+                            return 'Veuillez séléctionner une salle dans la liste';
+                        })
+                        ->columnSpanFull(),
+                    Checkbox::make('conditionCheck')
+                        ->label('J\'ai lu et j\'accepte les conditions d\'accès à la salle')
+                        ->required(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null))
+                        ->dehydrated(false)
+                        ->columnSpanFull(),
+                ])
+                ->visible(fn(Get $get): bool => ($get('room_id') && Room::find($get('room_id'))->access_conditions != null)),
         ];
     }
 

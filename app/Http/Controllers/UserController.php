@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -62,7 +63,7 @@ class UserController extends Controller
         );
 
         // delete all associations of the user
-        info("Deleting all associations of the user: ".$user->id);
+        Log::debug("Deleting all associations of the user: ".$user->id);
         AssoMember::where('user_id', $user->id)->delete();
 
         foreach ($currentAssociations as $currentAsso) {
@@ -70,7 +71,7 @@ class UserController extends Controller
             // Check if the association already exists in the database based on its uuid
             if (!$asso) {
                 // If it does not exist, create a new association
-                info("Creating new association: ".$currentAsso['shortname']);
+                Log::debug("Creating new association: ".$currentAsso['shortname']);
                 $asso = Asso::create([
                     'id' => $currentAsso['id'],
                     'shortname' => $currentAsso['shortname'],
@@ -82,10 +83,10 @@ class UserController extends Controller
                 ->where('asso_id', $asso->id)
                 ->where('role_id', $currentAsso['user_role']['id'])
                 ->exists()) {
-                info("User is already a member of the association: ".$asso->shortname);
+                Log::debug("User is already a member of the association: ".$asso->shortname);
             }
             else {
-                info("Adding user ".$user->id." to the association: ".$asso->shortname." with role: ".$currentAsso['user_role']['id']);
+                Log::debug("Adding user ".$user->id." to the association: ".$asso->shortname." with role: ".$currentAsso['user_role']['id']);
                 AssoMember::create(
                     [
                         'user_id' => $user->id,
@@ -95,6 +96,10 @@ class UserController extends Controller
                 );
             }
         }
+
+        $user->updatePermissions();
+        info("User permissions registered successfully in DB : ", $user->permissions->pluck('key')->all());
+
         return $user;
     }
 }
