@@ -24,6 +24,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 
@@ -71,23 +72,25 @@ class BookingResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
+                    ViewAction::make(),
                     Tables\Actions\EditAction::make()
                         ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user())),
                     Tables\Actions\DeleteAction::make()
-                        ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user()))
+                        ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user())),
                 ])
                 ->tooltip('Actions')
             ])
             ->bulkActions([
                 //
-            ]);
+            ])
+            ->recordAction('view');
     }
 
     public static function infolist(Infolist $infolist): Infolist
     {
         return $infolist
             ->schema([
-                TextEntry::make('title'),
+                ...self::getInfoList(),
             ]);
     }
 
@@ -104,6 +107,74 @@ class BookingResource extends Resource
             'index' => Pages\ListBookings::route('/'),
             'create' => Pages\CreateBooking::route('/create'),
             'edit' => Pages\EditBooking::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getInfoList(): array
+    {
+        return [
+            TextEntry::make('title')
+                ->columnSpanFull()
+                ->label('Intitulé de la réservation')
+                ->inlineLabel(),
+            TextEntry::make('starts_at')
+                ->columnSpanFull()
+                ->label('Début de la réservation')
+                ->dateTime('d/m/Y H:i')
+                ->inlineLabel(),
+            TextEntry::make('ends_at')
+                ->columnSpanFull()
+                ->label('Début de la réservation')
+                ->dateTime('d/m/Y H:i')
+                ->inlineLabel(),
+            TextEntry::make('asso.shortname')
+                ->columnSpanFull()
+                ->label('Association')
+                ->inlineLabel()
+                ->visible(fn (Booking $record) => !$record->booking_perso),
+            TextEntry::make('creator.email')
+                ->columnSpanFull()
+                ->label('Créateur de la réservation')
+                ->inlineLabel()
+                ->visible(fn (Booking $record) => $record->isUserAuthor(auth()->user())),
+            \Filament\Infolists\Components\Section::make('')
+                ->schema([
+                    TextEntry::make('booking_perso')
+                        ->columnSpanFull()
+                        ->formatStateUsing(fn($state) => $state ? 'Réservation personnelle (pas dans le cadre d\'une association)': 'Réservation pour une association')
+                        ->label('')
+                ])
+                ->visible(fn (Booking $record) => $record->booking_perso),
+            \Filament\Infolists\Components\Section::make('')
+                ->schema([
+                    TextEntry::make('open_to_others')
+                        ->columnSpanFull()
+                        ->label('')
+                        ->icon(fn(Booking $record) => $record->open_to_others ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
+                        ->iconColor(fn(Booking $record) => $record->open_to_others ? 'success' : 'danger')
+                        ->formatStateUsing(fn(Booking $record) => $record->open_to_others ? 'Réservation publique, ouverte aux autres' : 'Réservation privée, fermée aux autres'),
+                ]),
+            \Filament\Infolists\Components\Section::make(fn ($record) => 'À propos de la salle : ' . $record->room->name)
+                ->collapsible()
+                ->collapsed()
+                ->schema([
+                    TextEntry::make('room.name')
+                        ->inlineLabel()
+                        ->label('Salle'),
+                    TextEntry::make('room.capacity')
+                        ->inlineLabel()
+                        ->label('Capacité maximale')
+                        ->formatStateUsing(fn($state) => $state ? $state . ' personnes' : null)
+                        ->placeholder('Non renseignée'),
+                    TextEntry::make('room.description')
+                        ->label('Description de la salle')
+                        ->inlineLabel()
+                        ->placeholder('Aucune description renseignée'),
+                    TextEntry::make('room.access_conditions')
+                        ->inlineLabel()
+                        ->placeholder('Aucune condition d\'accès renseignée')
+                        ->label('Conditions d\'accès'),
+                ])
         ];
     }
 
@@ -192,7 +263,6 @@ class BookingResource extends Resource
                         ->label('Début')
                         ->reactive()
                         ->minDate(now())
-                        ->default(time()+5*60) // Set default to current time + 5 minutes
                         ->rules([
                             fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
                                 // Two validation rules:
@@ -258,7 +328,6 @@ class BookingResource extends Resource
                                 }
                             }
                         ])
-                        ->default(time() + 60 * 60) // Set default to now + 1 hour
                         ->required(),
                     Placeholder::make('Horaires de la salle')
                         ->content(function(Get $get) {

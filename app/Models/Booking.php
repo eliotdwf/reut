@@ -39,6 +39,17 @@ class Booking extends Model
         return $this->belongsTo(Asso::class);
     }
 
+    /**
+     * Check if the booking author is the provided user.
+     * @param User $user
+     * @return bool
+     */
+    public function isUserAuthor(User $user): bool
+    {
+        return $this->user_id === $user->id;
+    }
+
+
     public function canUserUpdateDelete(User $user): bool
     {
         if(Carbon::parse($this->ends_at)->isPast()) {
@@ -51,7 +62,7 @@ class Booking extends Model
         $hasPermissionMusicDance = $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value);
         $hasPermissionMDE = $user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value);
         return ($hasPermissionMDE && $isMDERoom) || ($hasPermissionMusicDance && $isMusicOrDanceRoom)
-            || $user->id === $this->user_id;
+            || $this->isUserAuthor($user);
     }
 
 }

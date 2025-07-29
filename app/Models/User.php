@@ -99,32 +99,10 @@ class User extends Authenticatable implements FilamentUser, HasName
         return false;
     }
 
-
-    /*public function getPermissions(): array
-    {
-        Log::debug("Collecting permissions for user ID: " . $this->id);
-        $userPermissions = [];
-        // retrieve the user associations and roles
-        foreach ($this->assosMemberships()->get() as $assoMember) {
-            $assoId = $assoMember->asso->id;
-            $roleId = $assoMember->role_id;
-
-            // Retrieve the permissions for the association and role from the configuration
-            $configPermissions = config("access.allowed.$assoId.$roleId", []);
-            // Retrieve the default permissions for the association
-            $defaultAssociationPermissions = config("access.allowed.$assoId.*", []);
-            // Retrieve the default permissions for the role
-            $defaultRolePermissions = config("access.allowed.*.$roleId", []);
-            // Retrieve the global default permissions
-            $globalDefaultPermissions = config("access.allowed.*.*", []);
-
-            // merge all the user permissions
-            $userPermissions = (array)array_merge($userPermissions, $configPermissions, $defaultRolePermissions, $defaultAssociationPermissions, $globalDefaultPermissions);
-
-        }
-        return array_unique($userPermissions);
-    }*/
-
+    /**
+     * Updates the user's permissions based on their associations and roles.
+     * @return void
+     */
     public function updatePermissions(): void
     {
         Log::debug('Removing all permissions for user ID: ' . $this->id);
@@ -154,9 +132,14 @@ class User extends Authenticatable implements FilamentUser, HasName
         }
     }
 
+    /**
+     * Checks if the user can access the Filament panel.
+     * @param Panel $panel
+     * @return bool
+     */
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasPermission(PermissionEnum::MANAGE_ROOMS->value);
+        return true;
     }
 
     public function getFilamentName(): string

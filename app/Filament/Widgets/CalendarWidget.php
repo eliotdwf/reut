@@ -2,14 +2,11 @@
 
 namespace App\Filament\Widgets;
 
-use App\Enums\Permission;
-use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource;
 use App\Models\Booking;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Infolists\Components\Section;
-use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Model;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Actions\ViewAction;
@@ -60,12 +57,12 @@ class CalendarWidget extends FullCalendarWidget
             ->whereIn('room_id', $this->selectedRoomIDs);
 
         if ($this->filterBookingOpenToOthers != null) {
-            $bookingOpenToOtherBool = match ($this->filterBookingOpenToOthers){
+            $bookingOpenToOtherBool = match ($this->filterBookingOpenToOthers) {
                 'yes' => true,
                 'no' => false,
                 default => null,
             };
-            if($bookingOpenToOtherBool === true || $bookingOpenToOtherBool === false) { // specify the condition only if it is true or false
+            if ($bookingOpenToOtherBool === true || $bookingOpenToOtherBool === false) { // specify the condition only if it is true or false
                 $query->where('open_to_others', $bookingOpenToOtherBool);
             }
 
@@ -119,63 +116,7 @@ class CalendarWidget extends FullCalendarWidget
     public function viewAction(): Action
     {
         return ViewAction::make()
-            ->infolist([
-                TextEntry::make('title')
-                    ->label('Intitulé de la réservation')
-                    ->inlineLabel(),
-                TextEntry::make('starts_at')
-                    ->label('Début de la réservation')
-                    ->dateTime('d/m/Y H:i')
-                    ->inlineLabel(),
-                TextEntry::make('ends_at')
-                    ->label('Début de la réservation')
-                    ->dateTime('d/m/Y H:i')
-                    ->inlineLabel(),
-                TextEntry::make('asso.shortname')
-                    ->label('Association')
-                    ->inlineLabel()
-                    ->visible(fn (Booking $record) => !$record->booking_perso),
-                TextEntry::make('creator.email')
-                    ->label('Créateur de la réservation')
-                    ->inlineLabel()
-                    ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user())),
-                Section::make('')
-                    ->schema([
-                        TextEntry::make('booking_perso')
-                            ->formatStateUsing(fn($state) => $state ? 'Réservation personnelle (pas dans le cadre d\'une association)': 'Réservation pour une association')
-                            ->label('')
-                    ])
-                    ->visible(fn (Booking $record) => $record->booking_perso),
-                Section::make('')
-                    ->schema([
-                        TextEntry::make('open_to_others')
-                            ->label('')
-                            ->icon(fn(Booking $record) => $record->open_to_others ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
-                            ->iconColor(fn(Booking $record) => $record->open_to_others ? 'success' : 'danger')
-                            ->formatStateUsing(fn(Booking $record) => $record->open_to_others ? 'Réservation publique, ouverte aux autres' : 'Réservation privée, fermée aux autres'),
-                    ]),
-                Section::make(fn ($record) => 'À propos de la salle : ' . $record->room->name)
-                    ->collapsible()
-                    ->collapsed()
-                    ->schema([
-                        TextEntry::make('room.name')
-                            ->inlineLabel()
-                            ->label('Salle'),
-                        TextEntry::make('room.capacity')
-                            ->inlineLabel()
-                            ->label('Capacité maximale')
-                            ->formatStateUsing(fn($state) => $state ? $state . ' personnes' : null)
-                            ->placeholder('Non renseignée'),
-                        TextEntry::make('room.description')
-                            ->label('Description de la salle')
-                            ->inlineLabel()
-                            ->placeholder('Aucune description renseignée'),
-                        TextEntry::make('room.access_conditions')
-                            ->inlineLabel()
-                            ->placeholder('Aucune condition d\'accès renseignée')
-                            ->label('Conditions d\'accès'),
-                    ])
-            ])
+            ->infolist(BookingResource::getInfoList())
             ->modalFooterActions(
                 function (ViewAction $action, FullCalendarWidget $livewire) {
                     $actions = [];
@@ -200,6 +141,13 @@ class CalendarWidget extends FullCalendarWidget
             // Action to create a new booking
             CreateAction::make()
                 ->model(Booking::class)
+                ->fillForm(function (array $arguments): array {
+                    info('Mounting create action with arguments: ', $arguments);
+                    return [
+                        'starts_at' => Carbon::parse($arguments['start']) ?? now()->addMinutes(5),
+                        'ends_at' => Carbon::parse($arguments['end']) ?? now()->addHour(),
+                    ];
+                })
                 ->mutateFormDataUsing(function (array $data): array {
                     // add the user_id to the form data before creating a booking
                     return [
@@ -213,7 +161,6 @@ class CalendarWidget extends FullCalendarWidget
                 ->after(fn() => $this->refreshRecords()),
         ];
     }
-
 
     /**
      * Get the form schema for creating or editing a booking.
