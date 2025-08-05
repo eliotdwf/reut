@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     {
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {
             $switch
-                ->locales(['en', 'fr']); //https://github.com/bezhanSalleh/filament-language-switch
+                ->locales(['fr']); //https://github.com/bezhanSalleh/filament-language-switch
         });
         FilamentView::registerRenderHook(
             PanelsRenderHook::FOOTER,

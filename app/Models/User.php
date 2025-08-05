@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\Permission as PermissionEnum;
-use App\Models\Permission;
 use Carbon\Carbon;
 use DateTime;
 use Filament\Models\Contracts\FilamentUser;

@@ -12,6 +12,8 @@ use Filament\Pages\Page;
 class Calendar extends Page implements HasForms
 {
     use InteractsWithForms;
+
+    protected static ?string $title = 'Calendrier';
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
     protected static string $view = 'filament.pages.calendar';

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Constants;
 use App\Enums\Permission;
 use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource\Pages;
@@ -274,7 +275,8 @@ class BookingResource extends Resource
 
                                 $isWeekdayValid = $room->isRoomOpenByWeekday($weekday);
                                 if(!$isWeekdayValid) {
-                                    $fail('La salle n\'est pas accessible le ' . $weekday . '.');
+                                    $frenchWeekday = Constants::WEEKDAYS_FR[$weekday] ?? $weekday;
+                                    $fail('La salle n\'est pas accessible le ' . strtolower($frenchWeekday) . '.');
                                 }
                                 else {
                                     $startsTime = Carbon::parse($state)->format('H:i');
@@ -337,10 +339,11 @@ class BookingResource extends Resource
                                 return 'Veuillez sélectionner une salle pour afficher les horaires.';
                             }
                             $accessibleTimes = $room->accessibleTimes->firstWhere('weekday', $weekday);
+                            $frenchWeekday = strtolower(Constants::WEEKDAYS_FR[$weekday] ?? $weekday);
                             if(!$accessibleTimes->opens_at || !$accessibleTimes->closes_at) {
-                                return "La salle n'est pas accessible le " . $weekday . ".";
+                                return "La salle n'est pas accessible le " . $frenchWeekday. ".";
                             }
-                            return "La salle est accessible de " . $accessibleTimes->opens_at . " à " . $accessibleTimes->closes_at . " le " . $weekday . ".";
+                            return "La salle est accessible de " . $accessibleTimes->opens_at . " à " . $accessibleTimes->closes_at . " le " . $frenchWeekday . ".";
                         })
                         ->visible(fn($get) => $get('room_id') && $get('starts_at'))
                         ->columnSpanFull(),

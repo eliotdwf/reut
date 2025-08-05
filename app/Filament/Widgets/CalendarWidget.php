@@ -143,9 +143,14 @@ class CalendarWidget extends FullCalendarWidget
                 ->model(Booking::class)
                 ->fillForm(function (array $arguments): array {
                     info('Mounting create action with arguments: ', $arguments);
+                    if( !isset($arguments['start']) || !isset($arguments['end'])) {
+                        // If start or end is not set, use default values
+                        $arguments['start'] = now()->addMinutes(5);
+                        $arguments['end'] = now()->addHour();
+                    }
                     return [
-                        'starts_at' => Carbon::parse($arguments['start']) ?? now()->addMinutes(5),
-                        'ends_at' => Carbon::parse($arguments['end']) ?? now()->addHour(),
+                        'starts_at' => Carbon::parse($arguments['start']),
+                        'ends_at' => Carbon::parse($arguments['end']),
                     ];
                 })
                 ->mutateFormDataUsing(function (array $data): array {

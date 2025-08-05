@@ -1,0 +1,16 @@
+/node_modules
+/vendor
+/public/build
+/public/hot
+/public/storage
+/storage/app/*
+.env
+.env.example
+.env.production
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.yml
+README.md
+deploy.sh
+*.log

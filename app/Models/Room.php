@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Constants;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -36,13 +37,19 @@ class Room extends Model
     public function checkBookingTimeValid($weekday, $bookingTime): string | null
     {
         $accessibleTimes = $this->accessibleTimes->firstWhere('weekday', $weekday);
+        $frenchWeekday = Constants::WEEKDAYS_FR[$weekday] ?? $weekday;
+
+        if(! $accessibleTimes || !$accessibleTimes->opens_at || !$accessibleTimes->closes_at) {
+            return 'La salle n\'est pas accessible le ' . strtolower($frenchWeekday) . '.';
+        }
+
         $opensAt = Carbon::parse($accessibleTimes->opens_at)->format('H:i');
         $closesAt = Carbon::parse($accessibleTimes->closes_at)->format('H:i');
 
         info("Checking booking time: {$bookingTime} between {$opensAt} and {$closesAt} on {$weekday}");
 
         if ($bookingTime < $opensAt || $bookingTime > $closesAt) {
-            return 'La salle n\'est accessible qu\'entre ' . $opensAt . ' et ' . $closesAt . ' le ' . $weekday . '.';
+            return 'La salle n\'est accessible qu\'entre ' . $opensAt . ' et ' . $closesAt . ' le ' . strtolower($frenchWeekday) . '.';
         }
 
         return null;

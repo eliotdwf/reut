@@ -60,7 +60,6 @@ class MainPanelProvider extends PanelProvider
             ->brandName('RéUT - Réservation des salles de réunion')
             ->darkMode(false)
             ->plugin(FilamentFullCalendarPlugin::make()
-                ->schedulerLicenseKey('CC-Attribution-NonCommercial-NoDerivatives')
                 ->selectable()
                 ->editable()
                 ->timezone(config('app.timezone'))
