@@ -5,9 +5,9 @@ use App\Enums\Permission as P;
 return [
     // to get the allowed access path id /allowed/<assos_id>/<role_id>
     "allowed" => [
-        /*"*" => [
+        "*" => [
             "5e03dae0-3af5-11e9-a43d-b3a93bca68c7" => P::asListOfString(P::CREATE_BOOKINGS_MUSIC_DANCE_ROOMS_ASSO), // president
-        ],*/
+        ],
         "6dff8940-3af5-11e9-a76b-d5944de919ff" => [ // BDE-UTC
             "*" => P::asListOfString(P::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE), // all members
             "5e03dae0-3af5-11e9-a43d-b3a93bca68c7" => P::asListOfString(P::UPDATE_DELETE_BOOKINGS_MDE_ROOMS, P::MANAGE_ROOMS), // president

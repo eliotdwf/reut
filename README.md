@@ -16,6 +16,12 @@
 * [⚖️ License](#⚖️-license)
 * [📧 Contact](#📧-contact)
 
+# En local - docker
+
+> `docker compose build`
+> `docker compose up -d`
+
+
 ## 💬 Introduction
 
 **RéUT** is a web platform developed at [UTC](https://www.utc.fr/) to simplify and centralize room booking and management for student associations. The tool supports both individual students and student clubs, providing a seamless experience to check availability, book rooms, and manage bookings through a responsive, intuitive interface.

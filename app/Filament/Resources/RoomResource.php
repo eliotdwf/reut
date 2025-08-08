@@ -39,7 +39,15 @@ class RoomResource extends Resource
                     ->maxLength(255)
                     ->columnSpanFull(),
                 Grid::make()
+                    ->columns(3)
                     ->schema([
+                        TextInput::make('number')
+                            ->label('Numéro')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(50)
+                            ->placeholder('BFXXXX, PGXXXX, ...')
+                            ->helperText('Numéro administratif de la salle'),
                         TextInput::make('capacity')
                             ->label('Capacité')
                             ->numeric()
@@ -52,8 +60,8 @@ class RoomResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->hexColor()
-                            ->default('#FF5733')
-                            ->helperText(new HtmlString('Utilisez un code couleur hexadécimal, par exemple <code>#FF5733</code>')),
+                            ->placeholder('#FF5733')
+                            ->helperText('Code couleur hexadécimal pour l\'affichage dans le calendrier')
                     ]),
                 Select::make('room_type')
                     ->label('Type de salle')
@@ -145,6 +153,10 @@ class RoomResource extends Resource
                     ->label('Couleur'),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nom de la salle')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('number')
+                    ->label('Numéro')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('room_type')

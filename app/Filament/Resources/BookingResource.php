@@ -50,6 +50,10 @@ class BookingResource extends Resource
                     ->label('Créateur')
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('room.name')
+                    ->label('Salle')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Intitulé')
                     ->sortable()
@@ -61,11 +65,11 @@ class BookingResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('starts_at')
                     ->label('Début')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ends_at')
                     ->label('Fin')
-                    ->dateTime()
+                    ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
             ->filters([
@@ -155,13 +159,16 @@ class BookingResource extends Resource
                         ->iconColor(fn(Booking $record) => $record->open_to_others ? 'success' : 'danger')
                         ->formatStateUsing(fn(Booking $record) => $record->open_to_others ? 'Réservation publique, ouverte aux autres' : 'Réservation privée, fermée aux autres'),
                 ]),
-            \Filament\Infolists\Components\Section::make(fn ($record) => 'À propos de la salle : ' . $record->room->name)
+            \Filament\Infolists\Components\Section::make(fn ($record) => 'À propos de la salle : ' . $record->room->name . ' ('. $record->room->number.')')
                 ->collapsible()
                 ->collapsed()
                 ->schema([
                     TextEntry::make('room.name')
                         ->inlineLabel()
                         ->label('Salle'),
+                    TextEntry::make('room.number')
+                        ->inlineLabel()
+                        ->label('Numéro de la salle'),
                     TextEntry::make('room.capacity')
                         ->inlineLabel()
                         ->label('Capacité maximale')
@@ -250,12 +257,14 @@ class BookingResource extends Resource
                             $query->whereNotIn('room_type', [RoomType::MUSIC->value, RoomType::DANCE->value]);
                         }
                     }
-                    return $query->get()->pluck('name', 'id');
+                    return $query->get()->mapWithKeys(fn ($room) => [
+                        $room->id => "[{$room->number}] {$room->name}"
+                    ]);
 
                 })
                 ->required()
                 ->afterStateUpdated(fn(Set $set) => $set('conditionCheck', false))
-                ->helperText('Certaines salles peuvent ne pas apparaître en fonction de votre rôle sur le portail des assos et de si la réservation est une réservation personnelle ou non.')
+                ->helperText('Certaines salles peuvent ne pas apparaître en fonction de votre rôle sur le Portail des assos et de si la réservation est une réservation personnelle ou non.')
                 // ->searchable() // seem to break the options when reactive functionality
                 ->columnSpanFull(),
             Grid::make()

@@ -37,8 +37,8 @@ class CalendarWidget extends FullCalendarWidget
                 'right' => 'prev,next today',
             ],
             'initialView' => 'timeGridWeek', // shows time slots
-            'slotMinTime' => '06:00:00',     // optional: start time
-            'slotMaxTime' => '23:59:59',     // optional: end time
+            'slotMinTime' => '07:00:00',     // optional: start time
+            'slotMaxTime' => '22:59:59',     // optional: end time
             'slotDuration' => '00:30:00',    // optional: time slot interval
             'scrollTime' => '8:00:00',
         ];
@@ -71,13 +71,21 @@ class CalendarWidget extends FullCalendarWidget
             ->get()
             ->map(
                 function (Booking $booking) {
-                    $room = $booking->room->name;
+                    $roomName = $booking->room->name;
+                    $roomNumber = $booking->room->number;
+                    if ($booking->booking_perso) {
+                        $title = '[Perso]';
+                    }
+                    else {
+                        $asso = $booking->asso->shortname;
+                        $title = "[$asso]";
+                    }
+                    $title .= " [$roomName - $roomNumber] "."[$booking->title]";
                     return [
                         'id' => $booking->id,
-                        'title' => "$booking->title - $room",
+                        'title' => $title,
                         'start' => $booking->starts_at,
                         'end' => $booking->ends_at,
-                        //'url' => BookingResource::getUrl(name: 'view', parameters: ['record' => $booking]),
                         'shouldOpenUrlInNewTab' => true,
                         'color' => $booking->room->color ?: '#FDCCE0', // Default color if room is not set
                     ];
@@ -107,6 +115,7 @@ class CalendarWidget extends FullCalendarWidget
                     center: '',
                     right: 'prev,next'
                 });
+                calendar.setOption('height', '100vh');
             }
         }
     JS;
