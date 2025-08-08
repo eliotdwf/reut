@@ -13,9 +13,12 @@ services:
             - ./.env:/app/.env.docker.local
         depends_on:
             - db
+        networks:
+            - laravel_net
 
     db:
         image: mysql:8
+        container_name: mysql_db
         environment:
             MYSQL_DATABASE: reut_simde
             MYSQL_USER: root
@@ -23,3 +26,8 @@ services:
             MYSQL_ROOT_PASSWORD: root
         ports:
             - "3307:3306"
+        networks:
+            - laravel_net
+
+networks:
+    laravel_net:
