@@ -151,13 +151,13 @@ class User extends Authenticatable implements FilamentUser, HasName
      * This is based on whether the user has already reached the maximum time of personal bookings for the current week
      * @return bool
      */
-    public function canMakePersoBooking(DateTime $starts_at, DateTime $ends_at): bool
+    public function canMakePersoBooking(string $starts_at, string $ends_at): bool
     {
 
         //return false; // test the validation of the booking time
 
         // calculate time in minutes between the start and end of the booking
-        $bookingTime = Carbon::instance($starts_at)->diffInMinutes(Carbon::instance($ends_at));
+        $bookingTime = Carbon::parse($starts_at)->diffInMinutes(Carbon::parse($ends_at));
 
         // Get the current week start and end dates
         $weekStart = now()->startOfWeek();

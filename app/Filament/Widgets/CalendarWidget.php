@@ -52,8 +52,12 @@ class CalendarWidget extends FullCalendarWidget
     public function fetchEvents(array $fetchInfo): array
     {
         $query = Booking::query()
-            ->where('starts_at', '>=', $fetchInfo['start'])
-            ->where('ends_at', '<=', $fetchInfo['end'])
+            ->where(function ($q) use ($fetchInfo) {
+                $q->where('starts_at', '>=', $fetchInfo['start'])
+                    ->orWhere('ends_at', '<=', $fetchInfo['end']);
+            })
+//            ->where('starts_at', '>=', $fetchInfo['start'])
+//            ->where('ends_at', '<=', $fetchInfo['end'])
             ->whereIn('room_id', $this->selectedRoomIDs);
 
         if ($this->filterBookingOpenToOthers != null) {

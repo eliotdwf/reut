@@ -10,6 +10,8 @@ enum Permission: string
 
     case CREATE_BOOKINGS_MUSIC_DANCE_ROOMS_ASSO = 'create.bookings.music-dance.rooms.asso'; // allow booking dance and music rooms for the association
 
+    case CREATE_MULTIPLE_DAYS_BOOKINGS = 'create.multiple.days.bookings';
+
     case CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE = "create.bookings.over-two-weeks-before"; // allow booking rooms over two weeks before the event
 
     case UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS = "update-delete.bookings.music-dance.rooms"; // allow updating and deleting bookings for music and dance rooms

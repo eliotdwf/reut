@@ -267,6 +267,37 @@ class BookingResource extends Resource
                 ->helperText('Certaines salles peuvent ne pas apparaître en fonction de votre rôle sur le Portail des assos et de si la réservation est une réservation personnelle ou non.')
                 // ->searchable() // seem to break the options when reactive functionality
                 ->columnSpanFull(),
+            Section::make('Horaires de la salle')
+                ->collapsible()
+                ->collapsed()
+                ->columnSpanFull()
+                ->visible(fn(Get $get): bool => $get('room_id') && Room::find($get('room_id')))
+                ->schema([
+                    Placeholder::make('')
+                        ->content(function(Get $get) {
+                            $room = Room::find($get('room_id'));
+                            if (!$room) return 'Aucune salle sélectionnée.';
+                            $rows = $room->accessibleTimes->map(function($time) {
+                                $open = $time->opens_at ? Carbon::parse($time->opens_at)->format('H:i') : '--:--';
+                                $close = $time->closes_at ? Carbon::parse($time->closes_at)->format('H:i') : '--:--';
+                                $frenchWeekday = Constants::WEEKDAYS_FR[$time->weekday] ?? $time->weekday;
+                                return "<tr><td>{$frenchWeekday}</td><td>{$open}</td><td>{$close}</td></tr>";
+                            })->implode('');
+                            return new HtmlString(
+                                "<table style='width:100%;border-collapse:collapse'>
+                                    <thead>
+                                        <tr>
+                                            <th style='text-align: left;'>Jour</th>
+                                            <th style='text-align: left;'>Ouverture</th>
+                                            <th style='text-align: left;'>Fermeture</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{$rows}</tbody>
+                                </table>"
+                            );
+                        })
+                        ->columnSpanFull(),
+                ]),
             Grid::make()
                 ->schema([
                     DateTimePicker::make('starts_at')
@@ -314,17 +345,17 @@ class BookingResource extends Resource
                         ->rules([
                             fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
                                 // Three validation rules:
-                                // 1. The weekday of the booking's ending time must be the same as the start of the booking
-                                // 2. The booking end time must be within the room's accessible times for that day
-                                // 3. Check that the booking doesn't overlap with another booking for this room
-
-                                // compare the date of the start and end times
-                                $startsAtDate = Carbon::parse($get('starts_at'))->format('Y-m-d');
-                                $endsAtDate = Carbon::parse($state)->format('Y-m-d');
-                                if ($startsAtDate !== $endsAtDate) {
-                                    $fail('L\'heure de fin doit être le même jour que l\'heure de début.');
+                                // 1. The weekday of the booking's ending time must be the same as the start of the booking if the user making the booking does not have the permission to book multiple days
+                                if(!auth()->user()->hasPermission(Permission::CREATE_MULTIPLE_DAYS_BOOKINGS->value)) {
+                                    // compare the date of the start and end times
+                                    $startsAtDate = Carbon::parse($get('starts_at'))->format('Y-m-d');
+                                    $endsAtDate = Carbon::parse($state)->format('Y-m-d');
+                                    if ($startsAtDate !== $endsAtDate) {
+                                        $fail('L\'heure de fin doit être le même jour que l\'heure de début.');
+                                    }
                                 }
 
+                                // 2. The booking end time must be within the room's accessible times for that day
                                 $room = Room::find($get('room_id'));
                                 $weekday = Carbon::parse($state)->format('l');
                                 $endsTime = Carbon::parse($state)->format('H:i');
@@ -333,6 +364,7 @@ class BookingResource extends Resource
                                     $fail($endTimeValidationError);
                                 }
 
+                                // 3. Check that the booking doesn't overlap with another booking for this room
                                 $isRoomAlreadyBooked = $room->isAlreadyBooked(Carbon::parse($get('starts_at')),Carbon::parse($state));
                                 if ($isRoomAlreadyBooked) {
                                     $fail('La salle est déjà réservée pour cette période.');
@@ -340,22 +372,6 @@ class BookingResource extends Resource
                             }
                         ])
                         ->required(),
-                    Placeholder::make('Horaires de la salle')
-                        ->content(function(Get $get) {
-                            $room = Room::find($get('room_id'));
-                            $weekday = Carbon::parse($get('starts_at'))->format('l');
-                            if(!$room) {
-                                return 'Veuillez sélectionner une salle pour afficher les horaires.';
-                            }
-                            $accessibleTimes = $room->accessibleTimes->firstWhere('weekday', $weekday);
-                            $frenchWeekday = strtolower(Constants::WEEKDAYS_FR[$weekday] ?? $weekday);
-                            if(!$accessibleTimes->opens_at || !$accessibleTimes->closes_at) {
-                                return "La salle n'est pas accessible le " . $frenchWeekday. ".";
-                            }
-                            return "La salle est accessible de " . $accessibleTimes->opens_at . " à " . $accessibleTimes->closes_at . " le " . $frenchWeekday . ".";
-                        })
-                        ->visible(fn($get) => $get('room_id') && $get('starts_at'))
-                        ->columnSpanFull(),
                     Placeholder::make('Attention')
                         ->content(new HtmlString('<i>Vous ne pouvez pas réserver une salle plus de deux semaines à l\'avance.</i>'))
                         ->columnSpanFull()

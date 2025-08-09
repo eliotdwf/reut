@@ -80,7 +80,7 @@ class Room extends Model
     {
         // datenewbookingdebut > datefinbooking OU datenewbookingfin < datedebutbooking => newBooking valide
         // bookingStartsAt <= ends_at && bookingEndsAt >= starts_at => newBooking invalide
-        // I search for any booking that have a start time before or during the new booking's end time
+        // Search for any booking that have a start time before or during the new booking's end time
         // and an end time after or during the new booking's start time
         $overlappingBookings = $this->bookings()
             ->where('starts_at', '<=', $bookingEndsAt)
