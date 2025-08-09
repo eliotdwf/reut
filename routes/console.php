@@ -1,8 +1,7 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use App\Jobs\SyncAssosJob;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+//Schedule::job(new SyncAssosJob())->twiceDaily(); // Runs at 1:00 and 13:00
+Schedule::job(new SyncAssosJob())->everyMinute(); // Runs at 1:00 and 13:00

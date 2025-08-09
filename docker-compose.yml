@@ -10,7 +10,7 @@ services:
         env_file:
             - .env.docker.local
         volumes:
-            - ./.env:/app/.env.docker.local
+            - ./.env.docker.local:/app/.env.docker.local
             - ./storage/logs/laravel.log:/app/storage/logs/laravel.log
         depends_on:
             - db
