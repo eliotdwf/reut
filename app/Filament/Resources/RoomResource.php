@@ -170,6 +170,21 @@ class RoomResource extends Resource
                 Tables\Columns\TextColumn::make('description')
                     ->label('Description')
                     ->limit(50)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('access_conditions')
+                    ->label('Conditions d\'accès')
+                    ->limit(50)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Créé le')
+                    ->dateTime('d/m/y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Mis à jour le')
+                    ->dateTime('d/m/y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('room_type')

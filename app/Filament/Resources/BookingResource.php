@@ -6,6 +6,7 @@ use App\Constants;
 use App\Enums\Permission;
 use App\Enums\RoomType;
 use App\Filament\Resources\BookingResource\Pages;
+use App\Models\Asso;
 use App\Models\Booking;
 use App\Models\Room;
 use App\Models\User;
@@ -61,7 +62,12 @@ class BookingResource extends Resource
                 Tables\Columns\IconColumn::make('open_to_others')
                     ->label('Ouverte aux autres')
                     ->boolean()
+                    ->toggleable()
                     ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('booking_perso')
+                    ->label('Bénéficiaire')
+                    ->formatStateUsing(fn(Booking $record, $state) => $state ? '[Perso]' : $record->asso->shortname)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('starts_at')
                     ->label('Début')
@@ -71,6 +77,16 @@ class BookingResource extends Resource
                     ->label('Fin')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Créé le')
+                    ->dateTime('d/m/y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Mis à jour le')
+                    ->dateTime('d/m/y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -234,7 +250,17 @@ class BookingResource extends Resource
                 ->relationship('asso', 'name')
                 ->options(function () {
                     $user = auth()->user();
-                    return $user->assos()->pluck('shortname', 'id');
+                    $defaultAssos = $user->assos()->pluck('shortname', 'id');
+                    if ($user->hasPermission(Permission::CREATE_BOOKINGS_ASSOS_PAE->value)) {
+                        $assosPAE = Asso::assosPAE()->pluck('shortname', 'id');
+
+                        info("User has permission to book PAE associations, adding them to the list.", [
+                            'assosPAE' => $assosPAE->toArray()
+                        ]);
+
+                        $defaultAssos = $defaultAssos->merge($assosPAE);
+                    }
+                    return $defaultAssos;
                 })
                 ->searchable()
                 ->required(fn(Get $get) => !$get('booking_perso'))

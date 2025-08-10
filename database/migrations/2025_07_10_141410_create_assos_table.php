@@ -15,6 +15,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->string('shortname');
             $table->string('login')->unique();
+            $table->uuid('parent_id')->nullable();
             $table->boolean('in_cemetery')->default(false);
             $table->timestamps();
         });

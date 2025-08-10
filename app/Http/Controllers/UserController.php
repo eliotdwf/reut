@@ -71,10 +71,12 @@ class UserController extends Controller
             // Check if the association already exists in the database based on its uuid
             if (!$asso) {
                 // If it does not exist, create a new association
-                Log::debug("Creating new association: ".$currentAsso['shortname']);
+                Log::debug("Creating new association: ".$currentAsso['shortname'].
+                    " with id: ".$currentAsso['id']." and parent_id: ".($currentAsso['parent_id'] ?? 'null'));
                 $asso = Asso::create([
                     'id' => $currentAsso['id'],
                     'shortname' => $currentAsso['shortname'],
+                    'parent_id' => $currentAsso['parent_id'] ?? null,
                     'login' => $currentAsso['login'],
                 ]);
             }
