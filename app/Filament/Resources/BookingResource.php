@@ -57,6 +57,7 @@ class BookingResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('title')
                     ->label('Intitulé')
+                    ->toggleable()
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\IconColumn::make('open_to_others')
@@ -89,15 +90,28 @@ class BookingResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('asso.shortname')
+                    ->label('Association')
+                    ->options(
+                        Asso::orderBy('shortname')
+                            ->pluck('shortname', 'id')
+                            ->toArray()
+                    )
+                    ->searchable()
+                    ->relationship('asso', 'shortname')
+                    ->placeholder('Sélectionnez une asso'),
+                Tables\Filters\Filter::make('booking_perso')
+                    ->label('Réservations personnelles uniquement')
+                    ->toggle()
+                    ->query(fn($query) => $query->where('booking_perso', true))
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     ViewAction::make(),
                     Tables\Actions\EditAction::make()
-                        ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user())),
+                        ->visible(fn(Booking $record) => $record->canUserUpdateDelete(auth()->user())),
                     Tables\Actions\DeleteAction::make()
-                        ->visible(fn (Booking $record) => $record->canUserUpdateDelete(auth()->user())),
+                        ->visible(fn(Booking $record) => $record->canUserUpdateDelete(auth()->user())),
                 ])
                 ->tooltip('Actions')
             ])
@@ -152,20 +166,20 @@ class BookingResource extends Resource
                 ->columnSpanFull()
                 ->label('Association')
                 ->inlineLabel()
-                ->visible(fn (Booking $record) => !$record->booking_perso),
+                ->visible(fn(Booking $record) => !$record->booking_perso),
             TextEntry::make('creator.email')
                 ->columnSpanFull()
                 ->label('Créateur de la réservation')
                 ->inlineLabel()
-                ->visible(fn (Booking $record) => $record->isUserAuthor(auth()->user())),
+                ->visible(fn(Booking $record) => $record->isUserAuthor(auth()->user())),
             \Filament\Infolists\Components\Section::make('')
                 ->schema([
                     TextEntry::make('booking_perso')
                         ->columnSpanFull()
-                        ->formatStateUsing(fn($state) => $state ? 'Réservation personnelle (pas dans le cadre d\'une association)': 'Réservation pour une association')
+                        ->formatStateUsing(fn($state) => $state ? 'Réservation personnelle (pas dans le cadre d\'une association)' : 'Réservation pour une association')
                         ->label('')
                 ])
-                ->visible(fn (Booking $record) => $record->booking_perso),
+                ->visible(fn(Booking $record) => $record->booking_perso),
             \Filament\Infolists\Components\Section::make('')
                 ->schema([
                     TextEntry::make('open_to_others')
@@ -175,7 +189,7 @@ class BookingResource extends Resource
                         ->iconColor(fn(Booking $record) => $record->open_to_others ? 'success' : 'danger')
                         ->formatStateUsing(fn(Booking $record) => $record->open_to_others ? 'Réservation publique, ouverte aux autres' : 'Réservation privée, fermée aux autres'),
                 ]),
-            \Filament\Infolists\Components\Section::make(fn ($record) => 'À propos de la salle : ' . $record->room->name . ' ('. $record->room->number.')')
+            \Filament\Infolists\Components\Section::make(fn($record) => 'À propos de la salle : ' . $record->room->name . ' (' . $record->room->number . ')')
                 ->collapsible()
                 ->collapsed()
                 ->schema([
@@ -283,7 +297,7 @@ class BookingResource extends Resource
                             $query->whereNotIn('room_type', [RoomType::MUSIC->value, RoomType::DANCE->value]);
                         }
                     }
-                    return $query->get()->mapWithKeys(fn ($room) => [
+                    return $query->get()->mapWithKeys(fn($room) => [
                         $room->id => "[{$room->number}] {$room->name}"
                     ]);
 
@@ -300,10 +314,10 @@ class BookingResource extends Resource
                 ->visible(fn(Get $get): bool => $get('room_id') && Room::find($get('room_id')))
                 ->schema([
                     Placeholder::make('')
-                        ->content(function(Get $get) {
+                        ->content(function (Get $get) {
                             $room = Room::find($get('room_id'));
                             if (!$room) return 'Aucune salle sélectionnée.';
-                            $rows = $room->accessibleTimes->map(function($time) {
+                            $rows = $room->accessibleTimes->map(function ($time) {
                                 $open = $time->opens_at ? Carbon::parse($time->opens_at)->format('H:i') : '--:--';
                                 $close = $time->closes_at ? Carbon::parse($time->closes_at)->format('H:i') : '--:--';
                                 $frenchWeekday = Constants::WEEKDAYS_FR[$time->weekday] ?? $time->weekday;
@@ -332,24 +346,16 @@ class BookingResource extends Resource
                         ->minDate(now())
                         ->rules([
                             fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
-                                // Two validation rules:
-                                // 1. The room must be accessible on the selected day of the week
-                                // 2. The booking start time must be within the room's accessible times for that day
+                                // One validation rule:
+                                // 1. The booking start time must be within the room's accessible times for that day
 
                                 $room = Room::find($get('room_id'));
                                 $weekday = Carbon::parse($state)->format('l');
 
-                                $isWeekdayValid = $room->isRoomOpenByWeekday($weekday);
-                                if(!$isWeekdayValid) {
-                                    $frenchWeekday = Constants::WEEKDAYS_FR[$weekday] ?? $weekday;
-                                    $fail('La salle n\'est pas accessible le ' . strtolower($frenchWeekday) . '.');
-                                }
-                                else {
-                                    $startsTime = Carbon::parse($state)->format('H:i');
-                                    $startTimeValidationError = $room->checkBookingTimeValid($weekday, $startsTime);
-                                    if($startTimeValidationError) {
-                                        $fail($startTimeValidationError);
-                                    }
+                                $startsTime = Carbon::parse($state)->format('H:i');
+                                $startTimeValidationError = $room->checkBookingTimeValid($weekday, $startsTime);
+                                if ($startTimeValidationError) {
+                                    $fail($startTimeValidationError);
                                 }
                             }
                         ])
@@ -361,18 +367,18 @@ class BookingResource extends Resource
                         ->validationMessages([
                             'after' => 'L\'heure de fin doit être postérieure à l\'heure de début.',
                         ])
-                        ->beforeOrEqual(function() {
+                        ->beforeOrEqual(function () {
                             $currentUser = auth()->user();
-                            if( $currentUser->hasPermission(Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value)) {
+                            if ($currentUser->hasPermission(Permission::CREATE_BOOKINGS_OVER_TWO_WEEKS_BEFORE->value)) {
                                 return null; // No limit for users with permission to book over two weeks in advance
                             }
                             return now()->addWeeks(2); // Limit to two weeks in advance for other users
                         })
                         ->rules([
-                            fn($state, Get $get): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get) {
+                            fn($state, Get $get, $record): Closure => function (string $attribute, $value, Closure $fail) use ($state, $get, $record) {
                                 // Three validation rules:
                                 // 1. The weekday of the booking's ending time must be the same as the start of the booking if the user making the booking does not have the permission to book multiple days
-                                if(!auth()->user()->hasPermission(Permission::CREATE_MULTIPLE_DAYS_BOOKINGS->value)) {
+                                if (!auth()->user()->hasPermission(Permission::CREATE_MULTIPLE_DAYS_BOOKINGS->value)) {
                                     // compare the date of the start and end times
                                     $startsAtDate = Carbon::parse($get('starts_at'))->format('Y-m-d');
                                     $endsAtDate = Carbon::parse($state)->format('Y-m-d');
@@ -391,7 +397,8 @@ class BookingResource extends Resource
                                 }
 
                                 // 3. Check that the booking doesn't overlap with another booking for this room
-                                $isRoomAlreadyBooked = $room->isAlreadyBooked(Carbon::parse($get('starts_at')),Carbon::parse($state));
+                                $bookingId = $record ? $record->id : null; // If editing, get the current booking ID
+                                $isRoomAlreadyBooked = $room->isAlreadyBooked(Carbon::parse($get('starts_at')), Carbon::parse($state), $bookingId);
                                 if ($isRoomAlreadyBooked) {
                                     $fail('La salle est déjà réservée pour cette période.');
                                 }
@@ -414,12 +421,10 @@ class BookingResource extends Resource
                                 if ($room) {
                                     if (!$room->access_conditions) {
                                         return 'Aucune condition d\'accès définie pour cette salle.';
-                                    }
-                                    else {
+                                    } else {
                                         return $room->access_conditions;
                                     }
-                                }
-                                else {
+                                } else {
                                     return 'Impossible de trouver la salle avec l\'ID ' . $roomId;
                                 }
                             }
@@ -437,8 +442,8 @@ class BookingResource extends Resource
     }
 
     public static function canViewAny(): bool
-      {
-          return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
-          //return auth()->user()->hasPermissions([Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value, Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value], false);
-      }
+    {
+        return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
+        //return auth()->user()->hasPermissions([Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value, Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value], false);
+    }
 }

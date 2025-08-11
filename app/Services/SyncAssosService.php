@@ -82,10 +82,10 @@ class SyncAssosService
 
                     foreach ($associations as $asso) {
                         // Log shortname
-                        Log::info("Marking association '{$asso->shortname}' as in cemetery");
+                        Log::info("Marking association '{$asso->shortname}' as in cemetery and deleting future association's bookings");
 
-                        // Delete all bookings for this association
-                        Booking::where('asso_id', $asso->id)->delete();
+                        // Delete all future bookings for this association
+                        Booking::where('asso_id', $asso->id)->where('starts_at', '>=', time())->delete();
 
                         // Mark as in cemetery
                         $asso->update(['in_cemetery' => true]);

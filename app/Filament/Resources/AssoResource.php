@@ -29,6 +29,7 @@ class AssoResource extends Resource
     {
         return $table
             ->defaultPaginationPageOption(25)
+            ->defaultSort('shortname')
             ->columns([
                 Tables\Columns\TextColumn::make('login')
                     ->label('Login')
@@ -53,6 +54,12 @@ class AssoResource extends Resource
                     ->dateTime('d/m/y H:i')
                     ->sortable()
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('parent_id')
+                    ->label('Asso Parente')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->formatStateUsing(fn($state) => $state ? Asso::find($state)->shortname : 'Aucun'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('in_cemetery')
@@ -60,7 +67,11 @@ class AssoResource extends Resource
                     ->options([
                         true => 'Oui',
                         false => 'Non',
-                    ])
+                    ]),
+                Tables\Filters\SelectFilter::make('parent_id')
+                    ->label('Asso Parente')
+                    ->searchable()
+                    ->options(Asso::parentAssos()->pluck('shortname', 'id')),
             ])
             ->actions([
                //

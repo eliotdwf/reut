@@ -56,8 +56,6 @@ class CalendarWidget extends FullCalendarWidget
                 $q->where('starts_at', '>=', $fetchInfo['start'])
                     ->orWhere('ends_at', '<=', $fetchInfo['end']);
             })
-//            ->where('starts_at', '>=', $fetchInfo['start'])
-//            ->where('ends_at', '<=', $fetchInfo['end'])
             ->whereIn('room_id', $this->selectedRoomIDs);
 
         if ($this->filterBookingOpenToOthers != null) {

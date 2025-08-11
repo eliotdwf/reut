@@ -33,4 +33,12 @@ class Asso extends Model
         return self::where('parent_id', '6e1f5580-3af5-11e9-a85f-31a81ca6ffa0')->get();
     }
 
+    public static function parentAssos() {
+        return Asso::whereIn('id', function($query) {
+            $query->select('parent_id')
+                ->from('assos')
+                ->whereNotNull('parent_id');
+        });
+    }
+
 }

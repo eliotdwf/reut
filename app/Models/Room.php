@@ -71,22 +71,25 @@ class Room extends Model
 
     /**
      * Check if the room is already booked for the given time slot.
-     * @param $weekday
-     * @param $bookingStartsAt
-     * @param $bookingEndsAt
+     * @param $bookingStartsAt string Start datetime of the new booking
+     * @param $bookingEndsAt string End datetime of the new booking
+     * @param $bookingId string of the booking to exclude (for updates)
      * @return bool
      */
-    public function isAlreadyBooked($bookingStartsAt, $bookingEndsAt): bool
+    public function isAlreadyBooked($bookingStartsAt, $bookingEndsAt, $bookingId): bool
     {
         // datenewbookingdebut > datefinbooking OU datenewbookingfin < datedebutbooking => newBooking valide
         // bookingStartsAt <= ends_at && bookingEndsAt >= starts_at => newBooking invalide
         // Search for any booking that have a start time before or during the new booking's end time
         // and an end time after or during the new booking's start time
-        $overlappingBookings = $this->bookings()
-            ->where('starts_at', '<=', $bookingEndsAt)
-            ->where('ends_at', '>=', $bookingStartsAt)
-            ->get();
+        $overlappingBookingsQuery = $this->bookings()
+            ->where('starts_at', '<', $bookingEndsAt)
+            ->where('ends_at', '>', $bookingStartsAt);
+        if($bookingId) {
+            // Exclude the current booking if it exists (for updates)
+            $overlappingBookingsQuery->whereNot('id', $bookingId);
+        }
 
-        return $overlappingBookings->isNotEmpty();
+        return $overlappingBookingsQuery->get()->isNotEmpty();
     }
 }

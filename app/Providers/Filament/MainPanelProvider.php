@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Calendar;
+use App\Filament\Pages\LegalNotices;
+use App\Filament\Pages\PrivacyPolicies;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -20,7 +22,6 @@ use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 
 class MainPanelProvider extends PanelProvider
 {
-
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -35,6 +36,8 @@ class MainPanelProvider extends PanelProvider
             ->pages([
                 //Pages\Dashboard::class,
                 Calendar::class,
+                LegalNotices::class,
+                PrivacyPolicies::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
