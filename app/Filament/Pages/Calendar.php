@@ -18,6 +18,8 @@ class Calendar extends Page implements HasForms
 
     protected static ?string $slug = 'calendrier';
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static string $view = 'filament.pages.calendar';
 
     public string|null $filterBookingOpenToOthers = null;

@@ -57,9 +57,10 @@ class MainPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])
+            ->topNavigation()
             ->favicon(asset('images/reut.png'))
             ->brandLogo(asset('images/reut.png'))
-            ->brandLogoHeight('3rem')
+            ->brandLogoHeight('3.5rem')
             ->brandName('RéUT - Réservation des salles de réunion')
             ->darkMode(false)
             ->plugin(FilamentFullCalendarPlugin::make()
@@ -69,7 +70,6 @@ class MainPanelProvider extends PanelProvider
                 ->locale('fr')
                 ->plugins(['dayGrid', 'timeGrid'])
                 ->config([])
-            )
-            ->sidebarCollapsibleOnDesktop();
+            );
     }
 }

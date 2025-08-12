@@ -3,12 +3,12 @@
 namespace App\Providers;
 
 use App\Http\Responses\LogoutResponse;
+use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
+use Filament\Http\Responses\Auth\Contracts\LogoutResponse as LogoutResponseContract;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\ServiceProvider;
-use Filament\Http\Responses\Auth\Contracts\LogoutResponse as LogoutResponseContract;
-use BezhanSalleh\FilamentLanguageSwitch\LanguageSwitch;
 
 class AppServiceProvider extends ServiceProvider
 {

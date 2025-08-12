@@ -28,6 +28,11 @@ class RoomResource extends Resource
     protected static ?string $model = Room::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -225,6 +230,5 @@ class RoomResource extends Resource
     public static function canAccess(): bool
     {
         return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
-        //return auth()->user()->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value);
     }
 }
