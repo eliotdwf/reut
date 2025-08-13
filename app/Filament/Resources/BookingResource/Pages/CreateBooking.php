@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\BookingResource\Pages;
 
 use App\Filament\Resources\BookingResource;
-use Filament\Actions;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateBooking extends CreateRecord
@@ -21,5 +21,27 @@ class CreateBooking extends CreateRecord
     {
         $data['user_id'] = auth()->id();
         return $data;
+    }
+
+    protected static ?string $title = 'Nouvelle réservation';
+
+    public function getBreadcrumb(): string
+    {
+        return self::$title;
+    }
+
+    protected function getFormActions(): array
+    {
+        return [
+            Action::make('create')
+                ->label('Enregistrer la réservation')
+                ->action('create'),
+
+            Action::make('cancel')
+                ->label('Annuler')
+                ->color('gray')
+                //->action('cancel')
+                ->url($this->getResource()::getUrl()), // Redirect to resource index
+        ];
     }
 }

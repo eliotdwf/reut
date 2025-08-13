@@ -30,6 +30,7 @@ class MainPanelProvider extends PanelProvider
             ->default()
             ->id('main')
             ->path('')
+            ->homeUrl('/calendrier')
             ->colors([
                 'primary' => Color::Pink,
             ])

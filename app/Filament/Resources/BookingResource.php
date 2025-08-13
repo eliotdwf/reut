@@ -36,6 +36,12 @@ class BookingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $modelLabel = 'réservation';
+    protected static ?string $pluralModelLabel = 'réservations';
+
+    protected static ?string $slug = 'reservations';
+
+
     public static function form(Form $form): Form
     {
         return $form
