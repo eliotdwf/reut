@@ -59,6 +59,7 @@ class UserController extends Controller
                 'first_name' => $userDetails['firstName'],
                 'last_name' => $userDetails['lastName'],
                 'email' => $userDetails['email'],
+                'last_login_at' => now(),
             ]
         );
 

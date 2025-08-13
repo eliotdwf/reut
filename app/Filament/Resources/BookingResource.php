@@ -49,6 +49,8 @@ class BookingResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('creator.email')
                     ->label('Créateur')
+                    ->copyable()
+                    ->copyMessage('Adresse email copiée !')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('room.name')
@@ -170,6 +172,8 @@ class BookingResource extends Resource
             TextEntry::make('creator.email')
                 ->columnSpanFull()
                 ->label('Créateur de la réservation')
+                ->copyable()
+                ->copyMessage('Adresse email copiée !')
                 ->inlineLabel()
                 ->visible(fn(Booking $record) => $record->isUserAuthor(auth()->user())),
             \Filament\Infolists\Components\Section::make('')

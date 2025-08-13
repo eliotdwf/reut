@@ -28,8 +28,7 @@ class User extends Authenticatable implements FilamentUser, HasName
         'first_name',
         'last_name',
         'email',
-        'dark_theme',
-        'language',
+        'last_login_at',
     ];
 
     public function assosMemberships(): HasMany

@@ -16,8 +16,7 @@ return new class extends Migration
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
-            $table->boolean('dark_theme')->default(false);
-            $table->string('language')->nullable();
+            $table->timestamp('last_login_at');
             $table->timestamps();
         });
     }

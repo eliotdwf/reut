@@ -5,10 +5,12 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Calendar;
 use App\Filament\Pages\LegalNotices;
 use App\Filament\Pages\PrivacyPolicies;
+use App\Filament\Pages\UserAccount;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -38,6 +40,13 @@ class MainPanelProvider extends PanelProvider
                 Calendar::class,
                 LegalNotices::class,
                 PrivacyPolicies::class,
+                UserAccount::class,
+            ])
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('Mon compte')
+                    ->url(fn (): string => UserAccount::getUrl())
+                    ->icon('heroicon-o-identification'),
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
