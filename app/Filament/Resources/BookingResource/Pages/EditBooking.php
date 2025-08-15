@@ -12,6 +12,12 @@ class EditBooking extends EditRecord
 
     protected static ?string $title = 'Modifier la réservation';
 
+    protected function getRedirectUrl(): string
+    {
+        // Redirect to the index (list table) of this resource
+        return $this->getResource()::getUrl('index');
+    }
+
     public function getBreadcrumb(): string
     {
         return 'Modifier';

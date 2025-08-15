@@ -17,6 +17,12 @@ class CreateBooking extends CreateRecord
         return $data;
     }
 
+    protected function getRedirectUrl(): string
+    {
+        // Redirect to the index (list table) of this resource
+        return $this->getResource()::getUrl('index');
+    }
+
     protected static ?string $title = 'Nouvelle réservation';
 
     public function getBreadcrumb(): string

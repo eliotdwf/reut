@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Closure;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
@@ -28,6 +29,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\HtmlString;
 
 class BookingResource extends Resource
@@ -40,6 +42,26 @@ class BookingResource extends Resource
     protected static ?string $pluralModelLabel = 'réservations';
 
     protected static ?string $slug = 'reservations';
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+        $base = parent::getEloquentQuery();
+
+        if ($user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MDE_ROOMS->value)) {
+            return $base->whereHas('room', fn(Builder $q) =>
+                $q->where('room_type', RoomType::MDE->value)
+            );
+        }
+
+        if ($user->hasPermission(Permission::UPDATE_DELETE_BOOKINGS_MUSIC_DANCE_ROOMS->value)) {
+            return $base->whereHas('room', fn(Builder $q) =>
+                $q->whereIn('room_type', [RoomType::MUSIC->value, RoomType::DANCE->value])
+            );
+        }
+
+        abort(401, 'Accès non autorisé à la gestion des réservations');
+    }
 
 
     public static function form(Form $form): Form
@@ -111,8 +133,39 @@ class BookingResource extends Resource
                 Tables\Filters\Filter::make('booking_perso')
                     ->label('Réservations personnelles uniquement')
                     ->toggle()
-                    ->query(fn($query) => $query->where('booking_perso', true))
+                    ->query(fn($query) => $query->where('booking_perso', true)),
+                Tables\Filters\Filter::make('starts_at')
+                    ->label('Date de début')
+                    ->indicateUsing(function (array $data): ?string {
+                        if (! $data['date'] || ! $data['operator']) {
+                            return null;
+                        }
+                        return 'Date de début ' . $data['operator'] . ' ' . Carbon::parse($data['date'])->format('d/m/y H:i');
+                    })
+                    ->form([
+                        Fieldset::make('Date de début')
+                            ->schema([
+                                Select::make('operator')
+                                    ->label('')
+                                    ->options([
+                                        '>' => 'Après',
+                                        '<' => 'Avant',
+                                    ])
+                                    ->default('>'),
+                                DateTimePicker::make('date')
+                                    ->label('')
+                                    ->default(now()),
+                            ])
+                        ->columns(1)
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        if ($data['operator'] && $data['date']) {
+                            $query->where('starts_at', $data['operator'], $data['date']);
+                        }
+                    })
+                    ->default(),
             ])
+            //->filtersFormWidth(MaxWidth::Large)
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     ViewAction::make(),
@@ -121,7 +174,7 @@ class BookingResource extends Resource
                     Tables\Actions\DeleteAction::make()
                         ->visible(fn(Booking $record) => $record->canUserUpdateDelete(auth()->user())),
                 ])
-                ->tooltip('Actions')
+                    ->tooltip('Actions')
             ])
             ->bulkActions([
                 //

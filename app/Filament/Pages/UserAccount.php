@@ -61,6 +61,7 @@ class UserAccount extends Page implements HasForms, HasInfolists
                             ])
                             ->columns(3),
                         Tab::make('Permissions')
+                            ->badge(fn() => $this->user->permissions->count())
                             ->schema([
                                 TextEntry::make('permissions.key')
                                     ->label('')

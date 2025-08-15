@@ -21,7 +21,7 @@ use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\HtmlString;
+use \Illuminate\Database\Eloquent\Builder;
 
 class RoomResource extends Resource
 {
@@ -33,9 +33,25 @@ class RoomResource extends Resource
 
     protected static ?string $slug = 'salles';
 
+    public static function getEloquentQuery(): Builder
+    {
+        if(auth()->user()->hasPermission(Permission::MANAGE_MDE_ROOMS->value)) {
+            return parent::getEloquentQuery()
+                ->where('room_type', RoomType::MDE);
+        }
+        else if(auth()->user()->hasPermission(Permission::MANAGE_MUSIC_DANCE_ROOMS->value)) {
+            return parent::getEloquentQuery()
+                ->whereIn('room_type',[RoomType::MUSIC, RoomType::DANCE]);
+        }
+        else {
+            abort(401, 'Accès non autorisé à la gestion des salles');
+        }
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
+        // get the result from the eloquent query to match the current user permissions
+        return static::getEloquentQuery()->count() > 0 ? (string) static::getEloquentQuery()->count() : null;
     }
 
     public static function form(Form $form): Form
@@ -234,6 +250,6 @@ class RoomResource extends Resource
      */
     public static function canAccess(): bool
     {
-        return auth()->user()->hasPermission(Permission::MANAGE_ROOMS->value);
+        return auth()->user()->hasPermissions([Permission::MANAGE_MDE_ROOMS->value, Permission::MANAGE_MUSIC_DANCE_ROOMS->value], false);
     }
 }
