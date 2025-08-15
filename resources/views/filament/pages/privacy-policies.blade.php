@@ -13,7 +13,7 @@
             list-style-position: inside;
         }
     </style>
-    <small>Date de la dernière mise à jour : 11/08/2025</small>
+    <small>Date de la dernière mise à jour : 15/08/2025</small>
 
     <p>Le texte ci-dessous a pour but de décrire la politique de protection des données renseignées sur le site actuel
         (RéUT).</p>
@@ -28,19 +28,20 @@
             <li>Liste des associations de la fédération BDE-UTC auxquelles l'utilisateur est inscrit (avec le rôle de
                 l'utilisateur au sein de chaque association)
             </li>
+            <li>Statut de cotisation au BDE-UTC (information non sauvegardée, uniquement traitée au moment de la connexion)</li>
         </ul>
         <p>Ces informations sont nécessaires pour permettre à un utilisateur de réserver une salle pour une association
             dont
             il est membre. Les rôles sont utilisés pour déterminer les permissions de l'utilisateur sur la site
             RéUT.</p>
+        <p>Pour des raisons d'assurances, la cotisation au BDE-UTC est obligatoire pour pouvoir réserver une salle via RéUT.</p>
         <p>Les informations collectées à la connexion et les réservations de salles sont stockées au maximum un an.</p>
+        <p>Afin de pouvoir supprimer automatiquement les utilisateurs inactifs depuis plus d'un an, la date de dernière connexion est également sauvegardée.</p>
         <p>Les informations de réservations de salles ne sont pas privées, elles sont visibles par les membres des
             Pôles, du
             BDE et du SiMDE qui gèrent le site RéUT.</p>
     </div>
     <div>
-
-
         <h3 class="italic"><i>Sous-traitants au sens du RGPD pour ce traitement</i></h3>
         <ul class="list-disc ml-6">
             <li>Président⸱e⸱s du SiMDE (voir le <a href="https://assos.utc.fr/assos/simde">trombinoscope du SiMDE</a>

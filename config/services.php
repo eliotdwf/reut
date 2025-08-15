@@ -45,6 +45,7 @@ return [
         'resource' => [
             'owner_details_url' => env('OAUTH_RESOURCE_OWNER_DETAILS', 'https://auth.assos.utc.fr/api/user'),
             'current_associations_url' => env('OAUTH_RESOURCE_CURRENT_ASSOCIATIONS_URL', 'https://auth.assos.utc.fr/api/user/associations/current'),
+            'memberships_url' => env('OAUTH_RESOURCE_MEMBERSHIPS_URL', 'https://auth.assos.utc.fr/api/user/contributions'),
         ],
         'logout_url' => env('OAUTH_LOGOUT_URL', 'https://auth.assos.utc.fr/logout'),
     ]

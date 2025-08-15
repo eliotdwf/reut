@@ -94,7 +94,21 @@ class RoomResource extends Resource
                     ->required()
                     ->searchable()
                     ->preload()
-                    ->options(RoomType::casesAsKeyValueArray(true))
+                    ->options(function() {
+                        $user = auth()->user();
+                        if ($user->hasPermission(Permission::MANAGE_MDE_ROOMS->value)) {
+                            return [
+                                RoomType::MDE->name => RoomType::MDE->fullLabel(),
+                            ];
+                        }
+                        if ($user->hasPermission(Permission::MANAGE_MUSIC_DANCE_ROOMS->value)) {
+                            return [
+                                RoomType::MUSIC->name => RoomType::MUSIC->fullLabel(),
+                                RoomType::DANCE->name => RoomType::DANCE->fullLabel(),
+                            ];
+                        }
+                        return [];
+                    })
                     ->placeholder('Sélectionnez un type de salle')
                     ->columnSpanFull(),
                 Textarea::make('description')

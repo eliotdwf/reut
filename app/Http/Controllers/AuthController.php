@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\Permission;
 use App\Providers\RouteServiceProvider;
+use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,7 @@ class AuthController extends Controller
      */
     public GenericProvider $provider;
     private string $currentAssociationsUrl;
+    private string $membershipsUrl;
 
     /**
      * Create a new AuthController instance.
@@ -41,7 +43,7 @@ class AuthController extends Controller
             'urlResourceOwnerDetails' => config("services.oauth.resource.owner_details_url"),
             'scopes' => config("services.oauth.scopes"),
         ]);
-
+        $this->membershipsUrl = config("services.oauth.resource.memberships_url");
         $this->currentAssociationsUrl = config("services.oauth.resource.current_associations_url");
     }
 
@@ -55,7 +57,7 @@ class AuthController extends Controller
     {
 
         // Save the previous URL as the intended url to redirect after login
-        if(!$request->session()->has('url.intended')) {
+        if (!$request->session()->has('url.intended')) {
             Log::debug("Setting intended URL to previous URL: " . url()->previous());
             $request->session()->put('url.intended', url()->previous());
         } else {
@@ -106,11 +108,13 @@ class AuthController extends Controller
             $resourceOwner = $this->provider->getResourceOwner($accessToken);
             $userDetails = $resourceOwner->toArray();
 
-            $resourceCurrentAssociations = Http::withToken($accessToken->getToken())
-                ->get($this->currentAssociationsUrl);
+            // Check if user has an active membership to BDE-UTC
+            $resourceMemberships = Http::withToken($accessToken->getToken())
+                ->get($this->membershipsUrl);
 
-            $currentAssociations = $resourceCurrentAssociations->json();
-            info("Current associations: " . json_encode($currentAssociations));
+            if (!$this->hasActiveMembership($resourceMemberships->json())) {
+                abort(401, 'Vous devez être cotisant au BDE-UTC pour accéder à RéUT.');
+            }
 
             // Check if user account has been deleted
             if ($userDetails['deleted_at'] != null) {
@@ -121,6 +125,12 @@ class AuthController extends Controller
             if ($userDetails['provider'] != 'cas') {
                 abort(401, "Pour rappel, seules les personnes authentifiées via le Portail des assos et le CAS de l'UTC sont autorisées à accéder à RéUT.");
             }
+
+            $resourceCurrentAssociations = Http::withToken($accessToken->getToken())
+                ->get($this->currentAssociationsUrl);
+
+            $currentAssociations = $resourceCurrentAssociations->json();
+            info("Current associations: " . json_encode($currentAssociations));
 
             // Create or update the user in the database
             $user = $userController->createOrUpdateUser($userDetails, $currentAssociations);
@@ -162,8 +172,32 @@ class AuthController extends Controller
 
         // Regenerate the CSRF token
         $request->session()->regenerateToken();
-        info("User logged out successfully, redirecting to ". config('services.oauth.logout_url'));
+        info("User logged out successfully, redirecting to " . config('services.oauth.logout_url'));
 
         return redirect(config('services.oauth.logout_url'));
+    }
+
+    /**
+     * Check if the user has an active membership.
+     * A membership is active if:
+     *   - current date is between started_at and expire_at (inclusive)
+     *   - revoked_at is null
+     * @param $memberships
+     * @return bool
+     */
+    private function hasActiveMembership($memberships): bool
+    {
+        $now = Carbon::now();
+
+        foreach ($memberships as $membership) {
+            $start = Carbon::parse($membership['started_at']);
+            $expire = Carbon::parse($membership['expire_at']);
+
+            if (is_null($membership['revoked_at']) && $now->between($start, $expire)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -57,7 +57,10 @@ class UserAccount extends Page implements HasForms, HasInfolists
                                     ->dateTime('d/m/Y H:i'),
                                 TextEntry::make('updated_at')
                                     ->label('Mis à jour le')
-                                    ->since(),
+                                    ->dateTime('d/m/y H:i'),
+                                TextEntry::make('last_login_at')
+                                    ->label('Dernière connexion')
+                                    ->dateTime('d/m/Y H:i'),
                             ])
                             ->columns(3),
                         Tab::make('Permissions')
