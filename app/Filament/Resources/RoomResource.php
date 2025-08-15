@@ -133,13 +133,13 @@ class RoomResource extends Resource
                             ->hiddenLabel()
                             ->columnSpanFull()
                             ->options([
-                                'Monday'    => 'Monday',
-                                'Tuesday'   => 'Tuesday',
-                                'Wednesday' => 'Wednesday',
-                                'Thursday'  => 'Thursday',
-                                'Friday'    => 'Friday',
-                                'Saturday'  => 'Saturday',
-                                'Sunday'    => 'Sunday',
+                                'Monday'    => 'Lundi',
+                                'Tuesday'   => 'Mardi',
+                                'Wednesday' => 'Mercredi',
+                                'Thursday'  => 'Jeudi',
+                                'Friday'    => 'Vendredi',
+                                'Saturday'  => 'Samedi',
+                                'Sunday'    => 'Dimanche',
                             ]),
                         Placeholder::make('')
                             ->content('Laisser vide les deux champs (--:--) si la salle n\'est pas accessible ce jour-là')

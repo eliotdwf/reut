@@ -8,28 +8,9 @@ services:
         ports:
             - "8000:8000"
         env_file:
-            - .env.docker.local
+            - .env
         volumes:
             - ./.env.docker.local:/app/.env.docker.local
             - ./app:/app/app
             - ./storage/logs/laravel.log:/app/storage/logs/laravel.log
-        depends_on:
-            - db
-        networks:
-            - laravel_net
-
-    db:
-        image: mysql:8
-        container_name: mysql_db
-        environment:
-            MYSQL_DATABASE: reut_simde
-            MYSQL_USER: laravel_user
-            MYSQL_PASSWORD: laravel_pass
-            MYSQL_ROOT_PASSWORD: root
-        ports:
-            - "3307:3306"
-        networks:
-            - laravel_net
-
-networks:
-    laravel_net:
+            - ./database/database.sqlite:/app/database/database.sqlite

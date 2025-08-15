@@ -9,4 +9,7 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateRoom extends CreateRecord
 {
     protected static string $resource = RoomResource::class;
+
+    protected static ?string $title = 'Créer une salle';
+
 }
