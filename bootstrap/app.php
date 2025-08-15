@@ -1,11 +1,9 @@
 <?php
 
 use App\Http\Middleware\Authenticate;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -18,9 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
 
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(append:[
-            HandleInertiaRequests::class,
-        ]);
         $middleware->trustProxies(at:'*');
         $middleware->appendToGroup('auth', [
             Authenticate::class,

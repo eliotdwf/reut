@@ -114,12 +114,12 @@ class AuthController extends Controller
 
             // Check if user account has been deleted
             if ($userDetails['deleted_at'] != null) {
-                abort(401, 'Account deleted');
+                abort(401, 'Le compte a été supprimé.');
             }
 
             // Check if user account is provided from cas
             if ($userDetails['provider'] != 'cas') {
-                abort(401, 'Provider unauthorized');
+                abort(401, "Pour rappel, seules les personnes authentifiées via le Portail des assos et le CAS de l'UTC sont autorisées à accéder à RéUT.");
             }
 
             // Create or update the user in the database

@@ -28,6 +28,11 @@ class RoomResource extends Resource
     protected static ?string $model = Room::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $modelLabel = 'salle';
+    protected static ?string $pluralModelLabel = 'salles';
+
+    protected static ?string $slug = 'salles';
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();

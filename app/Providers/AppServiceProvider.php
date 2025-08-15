@@ -25,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
         });
         FilamentView::registerRenderHook(
             PanelsRenderHook::FOOTER,
-            fn (): View => view('footer'),
+            fn (): View => view('components.layouts.footer'),
         );
     }
 }

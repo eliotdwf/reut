@@ -151,6 +151,8 @@ class CalendarWidget extends FullCalendarWidget
         return [
             // Action to create a new booking
             CreateAction::make()
+                ->modalSubmitActionLabel('Réserver')
+                ->modalHeading('Réserver une salle')
                 ->label('Réserver une salle')
                 ->model(Booking::class)
                 ->fillForm(function (array $arguments): array {

@@ -150,6 +150,7 @@
         <div class="footer-note">
             <p>RéUT est développé et maintenu par le SiMDE (Service informatique de la Maison des étudiants).</p>
             <p>© 2025 Bureau Des Étudiants de l'UTC</p>
+            <p><a href="https://storyset.com/web">Web illustrations by Storyset</a></p>
         </div>
     </div>
 </footer>
