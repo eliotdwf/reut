@@ -20,16 +20,16 @@ return new class extends Migration
             $table->boolean('booking_perso')->default(false)->comment('Indicates if the booking is for an individual or for an association');
             $table->foreignId('room_id')
                 ->constrained()
-                ->onDelete('cascade')
+                ->cascadeOnDelete()
                 ->comment('The room that is being booked');
             $table->foreignUuid('user_id')
                 ->constrained()
-                ->onDelete('cascade')
+                ->cascadeOnDelete()
                 ->comment('The user who made the booking');
             $table->foreignUuid('asso_id')
                 ->nullable()
                 ->constrained()
-                ->onDelete('cascade')
+                ->cascadeOnDelete()
                 ->comment('The association for which the booking is being made, if not an individual booking');
             $table->timestamps();
         });

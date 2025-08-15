@@ -21,8 +21,8 @@ return new class extends Migration
         });
 
         Schema::create('asso_members', function (Blueprint $table) {
-            $table->foreignUuid('asso_id')->constrained();
-            $table->foreignUuid('user_id')->constrained();
+            $table->foreignUuid('asso_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->uuid('role_id');
             $table->primary(['asso_id', 'user_id', 'role_id']);
         });
